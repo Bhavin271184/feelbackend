@@ -1086,6 +1086,108 @@ class ServicesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 from django.conf import settings
 from urllib.parse import urlencode
 
+# class BookingView(generics.ListCreateAPIView):
+#     authentication_classes = []
+#     permission_classes = [AllowAny]
+#     serializer_class = BookingSerializer
+
+#     def post(self, request, *args, **kwargs):
+#         serializer = self.get_serializer(data=request.data)
+#         if serializer.is_valid():
+#             # Handle customer creation or update
+#             if serializer.validated_data['is_register']:
+#                 try:
+#                     customer = Customer.objects.get(mobile_number=serializer.validated_data['mobile_number'])
+#                 except Customer.DoesNotExist:
+#                     return Response({'error': 'Customer with this mobile number does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
+#             else:
+#                 customer_data = {
+#                     'mobile_number': serializer.validated_data['mobile_number'],
+#                     'email': serializer.validated_data['email'],
+#                     'first_name': serializer.validated_data['first_name'],
+#                     'last_name': serializer.validated_data['last_name'],
+#                     'birth_date': serializer.validated_data['birth_date'],
+#                     'anniversary_date': serializer.validated_data.get('anniversary_date', None),
+#                     'gender': serializer.validated_data['gender'],
+#                 }
+#                 customer, created = Customer.objects.update_or_create(
+#                     mobile_number=serializer.validated_data['mobile_number'],
+#                     defaults=customer_data
+#                 )
+
+#             # Fetch service details and prepare the service data
+#             total = 0
+#             service_ids = serializer.validated_data['service_ids']
+#             service_fetching_errors = []
+
+#             services = []
+#             for service_id in service_ids:
+#                 try:
+#                     service = Services.objects.get(id=service_id)
+#                     services.append({
+#                         'service_id': service_id,
+#                         'service_name': service.service_name,
+#                         'price': float(service.price)
+#                     })
+#                     total += service.price
+#                 except Services.DoesNotExist:
+#                     service_fetching_errors.append(f"Service with ID {service_id} does not exist.")
+
+#             if service_fetching_errors:
+#                 return Response({'service_errors': service_fetching_errors}, status=status.HTTP_400_BAD_REQUEST)
+
+#             # Prepare the CRM API parameters
+#             param_data = {
+#                 "clientInDate": serializer.validated_data['appointment_date'].strftime("%d/%m/%Y %H:%M"),
+#                 "waitCode": "S",
+#                 "waitTimeCode": "S",
+#                 "comments": "",
+#                 "bookedDate": serializer.validated_data['appointment_date'].strftime("%d/%m/%Y"),
+#                 "expectedStartTime": "1530",  # Placeholder value
+#                 "expectedEndTime": "1530",  # Placeholder value
+#                 "clientId": serializer.validated_data['mobile_number'],
+#                 "serviceId1": "0",  # Placeholder value
+#                 "employeeId1": "0"  # Placeholder value
+#             }
+
+#             # Encode the parameters into a URL-encoded string
+#             encoded_params = urlencode({"Param": str(param_data).replace("'", '"')})
+
+#             # Prepare the full CRM API URL
+#             crm_url = f"http://app.salonspa.in/book/bridge.ashx?key=gangatsw&cmd=AWT&{encoded_params}"
+
+#             # Send data to the CRM API using GET request
+#             try:
+#                 crm_response = requests.get(crm_url)
+#                 crm_response.raise_for_status()  # Raise an exception for HTTP errors
+#             except requests.RequestException as e:
+#                 return Response({'error': f'Failed to send data to CRM: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#             # Prepare and return the response data
+#             response_data = {
+#                 'customer': {
+#                     'id': customer.id,
+#                     'is_register': serializer.validated_data['is_register'],
+#                     'mobile_number': customer.mobile_number,
+#                     'email': customer.email,
+#                     'first_name': customer.first_name,
+#                     'last_name': customer.last_name,
+#                     'birth_date': customer.birth_date.strftime("%Y-%m-%d"),
+#                     'anniversary_date': customer.anniversary_date.strftime("%Y-%m-%d") if customer.anniversary_date else None,
+#                     'gender': customer.gender
+#                 },
+#                 'appointment_date': serializer.validated_data['appointment_date'].strftime("%Y-%m-%d"),
+#                 'services': services,
+#                 'total': float(total),  # Convert Decimal to float
+#                 'crm_url': crm_url
+#             }
+
+#             return Response(response_data, status=status.HTTP_201_CREATED)
+
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 class BookingView(generics.ListCreateAPIView):
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -1121,17 +1223,17 @@ class BookingView(generics.ListCreateAPIView):
             service_fetching_errors = []
 
             services = []
-            for service_id in service_ids:
+            for service_servid in service_ids:
                 try:
-                    service = Services.objects.get(id=service_id)
+                    service = Services.objects.get(servid=service_servid)
                     services.append({
-                        'service_id': service_id,
+                        'service_id': service_servid,
                         'service_name': service.service_name,
                         'price': float(service.price)
                     })
                     total += service.price
                 except Services.DoesNotExist:
-                    service_fetching_errors.append(f"Service with ID {service_id} does not exist.")
+                    service_fetching_errors.append(f"Service with servid {service_servid} does not exist.")
 
             if service_fetching_errors:
                 return Response({'service_errors': service_fetching_errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -1185,6 +1287,12 @@ class BookingView(generics.ListCreateAPIView):
             return Response(response_data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
 
 # # def send_booking_request(client_data):
 # #     url = 'https://app.salonspa.in/book/bridge.ashx'
