@@ -1048,15 +1048,15 @@ class ServicesListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         childcategory = serializer.validated_data.get('childcategory')
 
-        # Check if the childcategory is provided
         if childcategory:
+            # If childcategory is provided, calculate the new priority
             max_priority = Services.objects.filter(childcategory=childcategory).aggregate(Max('priority'))['priority__max'] or 0
             new_priority = max_priority + 1
+            # Save with the calculated priority
             serializer.save(priority=new_priority)
         else:
-            # Save without setting priority if childcategory is not provided
+            # If childcategory is not provided, save without modifying priority
             serializer.save()
-
 
 
 class ServicesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -1065,21 +1065,16 @@ class ServicesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticatedForPostPatchDelete]
 
     def perform_update(self, serializer):
-        childcategory = serializer.validated_data.get('childcategory', serializer.instance.childcategory)
-        
-        if not childcategory:
-            raise ValidationError("Child category must be provided.")
+        childcategory = serializer.validated_data.get('childcategory')
 
-        # Handle priority updates
-        priority = serializer.validated_data.get('priority', None)
-        if priority is not None:
-            # Check if priority conflicts with existing priorities
-            if Services.objects.filter(childcategory=childcategory, priority=priority).exclude(id=self.kwargs['pk']).exists():
-                max_priority = Services.objects.filter(childcategory=childcategory).aggregate(models.Max('priority'))['priority__max'] or 0
-                priority = max_priority + 1
-            
-            serializer.save(priority=priority)
+        if childcategory:
+            # If childcategory is provided, calculate the new priority
+            max_priority = Services.objects.filter(childcategory=childcategory).aggregate(Max('priority'))['priority__max'] or 0
+            new_priority = max_priority + 1
+            # Save with the calculated priority
+            serializer.save(priority=new_priority)
         else:
+            # If childcategory is not provided, save without modifying priority
             serializer.save()
 
 # ------------------------------------=====================================================================
