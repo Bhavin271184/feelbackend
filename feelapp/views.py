@@ -1186,6 +1186,85 @@ from urllib.parse import urlencode
 
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+from rest_framework import generics, status
+from rest_framework.response import Response
+from django.db import transaction
+from django.db.models import F, Max
+class BaseNormalPriorityUpdateView(generics.UpdateAPIView):
+    field_name = 'priority'  # Default field name for priority
+    permission_classes = [IsAuthenticatedForPostPatchDelete]
+
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        new_priority = request.data.get(self.field_name)
+
+        if new_priority is not None:
+            new_priority = int(new_priority)
+
+            if new_priority >= 0:  # Check if the priority is non-negative
+                with transaction.atomic():
+                    max_priority = self.get_max_priority()
+
+                    if new_priority > max_priority:
+                        new_priority = max_priority
+
+                    self.update_priority(instance, new_priority, self.field_name)
+                    serializer = self.get_serializer(instance)
+                    return Response(serializer.data)
+            else:
+                return Response({"detail": f"{self.field_name.capitalize()} must be a non-negative integer."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"detail": f"{self.field_name.capitalize()} is required in the request data."}, status=status.HTTP_400_BAD_REQUEST)
+
+    def get_max_priority(self):
+        max_priority = self.queryset.aggregate(Max(self.field_name))[f'{self.field_name}__max']
+        return max_priority if max_priority is not None else 0
+
+    def update_priority(self, instance, new_priority, field_name):
+        with transaction.atomic():
+            # Lock the rows based on the field_name
+            items = self.queryset.select_for_update().all()
+
+            old_priority = getattr(instance, field_name)
+
+            # Temporarily set the priority of the instance to the new_priority
+            setattr(instance, field_name, new_priority)
+            instance.save(update_fields=[field_name])
+
+            if new_priority < old_priority:
+                # If the object is moving up in priority, increment the priorities of the objects with lesser or equal priority
+                objects_to_update = items.filter(**{f'{field_name}__lt': old_priority, f'{field_name}__gte': new_priority}).order_by('-' + field_name)
+                objects_to_update.update(**{field_name: F(field_name) + 1})
+
+            elif new_priority > old_priority:
+                # If the object is moving down in priority, decrement the priorities of the objects in between
+                objects_to_update = items.filter(**{f'{field_name}__gt': old_priority, f'{field_name}__lte': new_priority}).order_by(field_name)
+                objects_to_update.update(**{field_name: F(field_name) - 1})
+
+            # Set the priority of the instance to the new_priority
+            setattr(instance, field_name, new_priority)
+            instance.save(update_fields=[field_name])
+
+
+
+class ServicesPriorityUpdateView(BaseNormalPriorityUpdateView):
+    queryset = Services.objects.all()
+    serializer_class = ServicesSerializer
+    field_name = 'priority' 
+    # permission_classes = [IsAuthenticatedForPostPatchDelete]
+
+
+
+class HeroOfferPriorityUpdateView(BaseNormalPriorityUpdateView):
+    queryset = HeroOffer.objects.all()
+    serializer_class = HeroOfferSerializer
+    field_name = 'priority'  
+
+
+
+
 import json
 # AWT working  code is on the line  1330 to 1428 
 class BookingView(generics.ListCreateAPIView):
@@ -1426,6 +1505,8 @@ class BookingView(generics.ListCreateAPIView):
 #             return Response(response_data, status=status.HTTP_201_CREATED)
 
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 # # def send_booking_request(client_data):
 # #     url = 'https://app.salonspa.in/book/bridge.ashx'
