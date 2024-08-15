@@ -306,7 +306,7 @@ class Services(models.Model):
     subcategory = models.ForeignKey(SubcategoryModel, on_delete=models.CASCADE,null=True,blank=True)
     childcategory = models.ForeignKey(ChildCategoryModel, on_delete=models.CASCADE,null=True,blank=True)  # No default here
     service_name = models.CharField(max_length=255, unique=True)
-    description = models.TextField()
+    description = models.TextField(blank=True, null=True)
     price = models.FloatField()
     image = models.ImageField(upload_to='services/', blank=True, null=True)
     # gender = models.CharField(max_length=255)
