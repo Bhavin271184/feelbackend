@@ -1261,146 +1261,7 @@ class HeroOfferPriorityUpdateView(BaseNormalPriorityUpdateView):
 
 
 import json
-# AWT working  code is on the line  1330 to 1428 
-class BookingView(generics.ListCreateAPIView):
-    authentication_classes = []
-    permission_classes = [AllowAny]
-    serializer_class = BookingSerializer
-
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            mobile_number = serializer.validated_data['mobile_number']
-            is_register = serializer.validated_data['is_register']
-            appointment_date = serializer.validated_data['appointment_date']
-            service_ids = serializer.validated_data['service_ids']
-            total = 0
-            service_fetching_errors = []
-
-            # Handle customer creation or update
-            if is_register:
-                try:
-                    customer = Customer.objects.get(mobile_number=mobile_number)
-                except Customer.DoesNotExist:
-                    return Response({'error': 'Customer with this mobile number does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                customer_data = {
-                    'mobile_number': mobile_number,
-                    'email': serializer.validated_data['email'],
-                    'first_name': serializer.validated_data['first_name'],
-                    'last_name': serializer.validated_data['last_name'],
-                    'birth_date': serializer.validated_data['birth_date'],
-                    'anniversary_date': serializer.validated_data.get('anniversary_date', None),
-                    'gender': serializer.validated_data['gender'],
-                }
-                customer, created = Customer.objects.update_or_create(
-                    mobile_number=mobile_number,
-                    defaults=customer_data
-                )
-
-            # Fetch service details and calculate total
-            services = []
-            for service_servid in service_ids:
-                try:
-                    service = Services.objects.get(servid=service_servid)
-                    services.append({
-                        'service_id': service_servid,
-                        'service_name': service.service_name,
-                        'price': float(service.price)
-                    })
-                    total += service.price
-                except Services.DoesNotExist:
-                    service_fetching_errors.append(f"Service with servid {service_servid} does not exist.")
-
-            if service_fetching_errors:
-                return Response({'service_errors': service_fetching_errors}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Prepare CRM API parameters
-            param_data = {
-                "clientInDate": appointment_date.strftime("%d/%m/%Y %H:%M"),
-                "waitCode": "S",
-                "waitTimeCode": "S",
-                "comments": "",
-                "bookedDate": appointment_date.strftime("%d/%m/%Y"),
-                "expectedStartTime": "1530",  # Placeholder value
-                "expectedEndTime": "1530",  # Placeholder value
-                "clientId": mobile_number,
-                "serviceId1": "0",  # Placeholder value
-                "employeeId1": "0"  # Placeholder value
-            }
-
-            encoded_wait_list_params = urlencode({"Param": json.dumps(param_data)})
-            wait_list_url = f"http://app.salonspa.in/book/bridge.ashx?key=gangatsw&cmd=AWT&{encoded_wait_list_params}"
-
-            client_param_data = {
-                "clientId": mobile_number,
-                "firstName": serializer.validated_data['first_name'],
-                "lastName": serializer.validated_data['last_name'],
-                "email": serializer.validated_data['email'],
-                "mobileNumber": mobile_number,
-                "gender": serializer.validated_data['gender'],
-                "dateOfAnniversary": serializer.validated_data.get('anniversary_date', "").strftime("%d/%m/%Y") if serializer.validated_data.get('anniversary_date') else "",
-                "dateOfBirth": serializer.validated_data['birth_date'].strftime("%d/%m/%Y"),
-                "category": "",  # Optional
-                "referralType": ""  # Optional
-            }
-
-            encoded_client_params = urlencode({"Param": json.dumps(client_param_data)})
-            create_client_url = f"http://app.salonspa.in/book/bridge.ashx?key=gangatsw&cmd=AC&{encoded_client_params}"
-
-            # Check if the client exists in CRM and handle accordingly
-            try:
-                # First, try adding to the waiting list
-                crm_response = requests.get(wait_list_url)
-                crm_response.raise_for_status()
-                crm_response_data = crm_response.json()
-
-                if crm_response_data.get("errorCode") == "1003":
-                    # Client not found, create new client
-                    crm_create_client_response = requests.get(create_client_url)
-                    crm_create_client_response.raise_for_status()
-                    create_client_response_data = crm_create_client_response.json()
-
-                    if create_client_response_data.get("errorCode") == "0":  # Assuming 0 is success
-                        # Retry adding to waiting list
-                        crm_response = requests.get(wait_list_url)
-                        crm_response.raise_for_status()
-                        crm_response_data = crm_response.json()
-                    else:
-                        return Response({
-                            'error': f'Failed to create new client in CRM. Response: {create_client_response_data}'
-                        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-                # Prepare and return the response data
-                response_data = {
-                    'customer': {
-                        'id': customer.id,
-                        'is_register': is_register,
-                        'mobile_number': customer.mobile_number,
-                        'email': customer.email,
-                        'first_name': customer.first_name,
-                        'last_name': customer.last_name,
-                        'birth_date': customer.birth_date.strftime("%Y-%m-%d"),
-                        'anniversary_date': customer.anniversary_date.strftime("%Y-%m-%d") if customer.anniversary_date else None,
-                        'gender': customer.gender
-                    },
-                    'appointment_date': appointment_date.strftime("%Y-%m-%d"),
-                    'services': services,
-                    'total': float(total),  # Convert Decimal to float
-                    'crm_wait_list_url': wait_list_url,
-                    'crm_create_client_url': create_client_url,
-                    'crm_response': crm_response_data
-                }
-
-                return Response(response_data, status=status.HTTP_201_CREATED)
-
-            except requests.RequestException as e:
-                return Response({
-                    'error': f'Failed to communicate with CRM: {str(e)}'
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+# # AWT working  code is on the line  1330 to 1428 
 # class BookingView(generics.ListCreateAPIView):
 #     authentication_classes = []
 #     permission_classes = [AllowAny]
@@ -1409,15 +1270,22 @@ class BookingView(generics.ListCreateAPIView):
 #     def post(self, request, *args, **kwargs):
 #         serializer = self.get_serializer(data=request.data)
 #         if serializer.is_valid():
+#             mobile_number = serializer.validated_data['mobile_number']
+#             is_register = serializer.validated_data['is_register']
+#             appointment_date = serializer.validated_data['appointment_date']
+#             service_ids = serializer.validated_data['service_ids']
+#             total = 0
+#             service_fetching_errors = []
+
 #             # Handle customer creation or update
-#             if serializer.validated_data['is_register']:
+#             if is_register:
 #                 try:
-#                     customer = Customer.objects.get(mobile_number=serializer.validated_data['mobile_number'])
+#                     customer = Customer.objects.get(mobile_number=mobile_number)
 #                 except Customer.DoesNotExist:
 #                     return Response({'error': 'Customer with this mobile number does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
 #             else:
 #                 customer_data = {
-#                     'mobile_number': serializer.validated_data['mobile_number'],
+#                     'mobile_number': mobile_number,
 #                     'email': serializer.validated_data['email'],
 #                     'first_name': serializer.validated_data['first_name'],
 #                     'last_name': serializer.validated_data['last_name'],
@@ -1426,15 +1294,11 @@ class BookingView(generics.ListCreateAPIView):
 #                     'gender': serializer.validated_data['gender'],
 #                 }
 #                 customer, created = Customer.objects.update_or_create(
-#                     mobile_number=serializer.validated_data['mobile_number'],
+#                     mobile_number=mobile_number,
 #                     defaults=customer_data
 #                 )
 
-#             # Fetch service details and prepare the service data
-#             total = 0
-#             service_ids = serializer.validated_data['service_ids']
-#             service_fetching_errors = []
-
+#             # Fetch service details and calculate total
 #             services = []
 #             for service_servid in service_ids:
 #                 try:
@@ -1451,56 +1315,276 @@ class BookingView(generics.ListCreateAPIView):
 #             if service_fetching_errors:
 #                 return Response({'service_errors': service_fetching_errors}, status=status.HTTP_400_BAD_REQUEST)
 
-#             # Prepare the CRM API parameters
+#             # Prepare CRM API parameters
 #             param_data = {
-#                 "clientInDate": serializer.validated_data['appointment_date'].strftime("%d/%m/%Y %H:%M"),
+#                 "clientInDate": appointment_date.strftime("%d/%m/%Y %H:%M"),
 #                 "waitCode": "S",
 #                 "waitTimeCode": "S",
 #                 "comments": "",
-#                 "bookedDate": serializer.validated_data['appointment_date'].strftime("%d/%m/%Y"),
+#                 "bookedDate": appointment_date.strftime("%d/%m/%Y"),
 #                 "expectedStartTime": "1530",  # Placeholder value
 #                 "expectedEndTime": "1530",  # Placeholder value
-#                 "clientId": serializer.validated_data['mobile_number'],
+#                 "clientId": mobile_number,
 #                 "serviceId1": "0",  # Placeholder value
 #                 "employeeId1": "0"  # Placeholder value
 #             }
 
-#             # Encode the parameters into a URL-encoded string
-#             encoded_params = urlencode({"Param": str(param_data).replace("'", '"')})
+#             encoded_wait_list_params = urlencode({"Param": json.dumps(param_data)})
+#             wait_list_url = f"http://app.salonspa.in/book/bridge.ashx?key=gangatsw&cmd=AWT&{encoded_wait_list_params}"
 
-#             # Prepare the full CRM API URL
-#             crm_url = f"http://app.salonspa.in/book/bridge.ashx?key=gangatsw&cmd=AWT&{encoded_params}"
-
-#             # Send data to the CRM API using GET request
-#             try:
-#                 crm_response = requests.get(crm_url)
-#                 crm_response.raise_for_status()  # Raise an exception for HTTP errors
-#             except requests.RequestException as e:
-#                 return Response({'error': f'Failed to send data to CRM: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-#             # Prepare and return the response data
-#             response_data = {
-#                 'customer': {
-#                     'id': customer.id,
-#                     'is_register': serializer.validated_data['is_register'],
-#                     'mobile_number': customer.mobile_number,
-#                     'email': customer.email,
-#                     'first_name': customer.first_name,
-#                     'last_name': customer.last_name,
-#                     'birth_date': customer.birth_date.strftime("%Y-%m-%d"),
-#                     'anniversary_date': customer.anniversary_date.strftime("%Y-%m-%d") if customer.anniversary_date else None,
-#                     'gender': customer.gender
-#                 },
-#                 'appointment_date': serializer.validated_data['appointment_date'].strftime("%Y-%m-%d"),
-#                 'services': services,
-#                 'total': float(total),  # Convert Decimal to float
-#                 'crm_url': crm_url
+#             client_param_data = {
+#                 "clientId": mobile_number,
+#                 "firstName": serializer.validated_data['first_name'],
+#                 "lastName": serializer.validated_data['last_name'],
+#                 "email": serializer.validated_data['email'],
+#                 "mobileNumber": mobile_number,
+#                 "gender": serializer.validated_data['gender'],
+#                 "dateOfAnniversary": serializer.validated_data.get('anniversary_date', "").strftime("%d/%m/%Y") if serializer.validated_data.get('anniversary_date') else "",
+#                 "dateOfBirth": serializer.validated_data['birth_date'].strftime("%d/%m/%Y"),
+#                 "category": "",  # Optional
+#                 "referralType": ""  # Optional
 #             }
 
-#             return Response(response_data, status=status.HTTP_201_CREATED)
+#             encoded_client_params = urlencode({"Param": json.dumps(client_param_data)})
+#             create_client_url = f"http://app.salonspa.in/book/bridge.ashx?key=gangatsw&cmd=AC&{encoded_client_params}"
+
+#             # Check if the client exists in CRM and handle accordingly
+#             try:
+#                 # First, try adding to the waiting list
+#                 crm_response = requests.get(wait_list_url)
+#                 crm_response.raise_for_status()
+#                 crm_response_data = crm_response.json()
+
+#                 if crm_response_data.get("errorCode") == "1003":
+#                     # Client not found, create new client
+#                     crm_create_client_response = requests.get(create_client_url)
+#                     crm_create_client_response.raise_for_status()
+#                     create_client_response_data = crm_create_client_response.json()
+
+#                     if create_client_response_data.get("errorCode") == "0":  # Assuming 0 is success
+#                         # Retry adding to waiting list
+#                         crm_response = requests.get(wait_list_url)
+#                         crm_response.raise_for_status()
+#                         crm_response_data = crm_response.json()
+#                     else:
+#                         return Response({
+#                             'error': f'Failed to create new client in CRM. Response: {create_client_response_data}'
+#                         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#                 # Prepare and return the response data
+#                 response_data = {
+#                     'customer': {
+#                         'id': customer.id,
+#                         'is_register': is_register,
+#                         'mobile_number': customer.mobile_number,
+#                         'email': customer.email,
+#                         'first_name': customer.first_name,
+#                         'last_name': customer.last_name,
+#                         'birth_date': customer.birth_date.strftime("%Y-%m-%d"),
+#                         'anniversary_date': customer.anniversary_date.strftime("%Y-%m-%d") if customer.anniversary_date else None,
+#                         'gender': customer.gender
+#                     },
+#                     'appointment_date': appointment_date.strftime("%Y-%m-%d"),
+#                     'services': services,
+#                     'total': float(total),  # Convert Decimal to float
+#                     'crm_wait_list_url': wait_list_url,
+#                     'crm_create_client_url': create_client_url,
+#                     'crm_response': crm_response_data
+#                 }
+
+#                 return Response(response_data, status=status.HTTP_201_CREATED)
+
+#             except requests.RequestException as e:
+#                 return Response({
+#                     'error': f'Failed to communicate with CRM: {str(e)}'
+#                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class BookingAWTView(generics.ListCreateAPIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    serializer_class = BookingAWTSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            # Handle customer creation or update
+            if serializer.validated_data.get('is_register'):
+                try:
+                    customer = Customer.objects.get(mobile_number=serializer.validated_data['mobile_number'])
+                except Customer.DoesNotExist:
+                    return Response({'error': 'Customer with this mobile number does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                customer_data = {
+                    'mobile_number': serializer.validated_data['mobile_number'],
+                    'email': serializer.validated_data.get('email', ''),
+                    'first_name': serializer.validated_data.get('first_name', ''),
+                    'last_name': serializer.validated_data.get('last_name', ''),
+                    'birth_date': serializer.validated_data.get('birth_date', None),
+                    'anniversary_date': serializer.validated_data.get('anniversary_date', None),
+                    'gender': serializer.validated_data.get('gender', ''),
+                }
+                customer, created = Customer.objects.update_or_create(
+                    mobile_number=serializer.validated_data['mobile_number'],
+                    defaults=customer_data
+                )
+
+            # Fetch service details and prepare the service data
+            total = 0
+            service_ids = serializer.validated_data['service_ids']
+            service_fetching_errors = []
+
+            services = []
+            for service_servid in service_ids:
+                try:
+                    service = Services.objects.get(servid=service_servid)
+                    services.append({
+                        'service_id': service_servid,
+                        'service_name': service.service_name,
+                        'price': float(service.price)
+                    })
+                    total += service.price
+                except Services.DoesNotExist:
+                    service_fetching_errors.append(f"Service with servid {service_servid} does not exist.")
+
+            if service_fetching_errors:
+                return Response({'service_errors': service_fetching_errors}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Prepare the CRM API parameters
+            param_data = {
+                "clientInDate": serializer.validated_data['appointment_date'].strftime("%d/%m/%Y %H:%M"),
+                "waitCode": "S",
+                "waitTimeCode": "S",
+                "comments": "",
+                "bookedDate": serializer.validated_data['appointment_date'].strftime("%d/%m/%Y"),
+                "expectedStartTime": serializer.validated_data.get('expectedStartTime', ""),
+                "expectedEndTime": serializer.validated_data.get('expectedEndTime', ""),
+                "clientId": serializer.validated_data['mobile_number'],
+                "serviceId1": "0",  # Placeholder value
+                "employeeId1": "0"  # Placeholder value
+            }
+
+            # Encode the parameters into a URL-encoded string
+            encoded_params = urlencode({"Param": str(param_data).replace("'", '"')})
+
+            # Prepare the full CRM API URL
+            crm_url = f"http://app.salonspa.in/book/bridge.ashx?key=gangatsw&cmd=AWT&{encoded_params}"
+
+            # Send data to the CRM API using GET request
+            try:
+                crm_response = requests.get(crm_url)
+                crm_response.raise_for_status()  # Raise an exception for HTTP errors
+            except requests.RequestException as e:
+                return Response({'error': f'Failed to send data to CRM: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            # Prepare and return the response data
+            response_data = {
+                'customer': {
+                    'id': customer.id,
+                    'is_register': serializer.validated_data.get('is_register', ''),
+                    'mobile_number': customer.mobile_number,
+                    'email': customer.email,
+                    'first_name': customer.first_name,
+                    'last_name': customer.last_name,
+                    'birth_date': customer.birth_date.strftime("%Y-%m-%d") if customer.birth_date else None,
+                    'anniversary_date': customer.anniversary_date.strftime("%Y-%m-%d") if customer.anniversary_date else None,
+                    'gender': customer.gender
+                },
+                'appointment_date': serializer.validated_data['appointment_date'].strftime("%Y-%m-%d"),
+                'expectedStartTime': serializer.validated_data.get('expectedStartTime', ''),
+                'expectedEndTime': serializer.validated_data.get('expectedEndTime', ''),
+                'services': services,
+                'total': float(total),  # Convert Decimal to float
+                'crm_url': crm_url
+            }
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+from urllib.parse import urlencode
+from rest_framework import status
+from rest_framework.response import Response
+import requests
+
+class BookingACView(generics.ListCreateAPIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    serializer_class = BookingACSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            mobile_number = serializer.validated_data['mobile_number']
+
+            # Extract and format date fields
+            birth_date = serializer.validated_data.get('birth_date')
+            anniversary_date = serializer.validated_data.get('anniversary_date')
+
+            # Create or update customer
+            customer_data = {
+                'mobile_number': mobile_number,
+                'email': serializer.validated_data.get('email'),
+                'first_name': serializer.validated_data.get('first_name'),
+                'last_name': serializer.validated_data.get('last_name'),
+                'birth_date': birth_date,
+                'anniversary_date': anniversary_date,
+                'gender': serializer.validated_data.get('gender'),
+            }
+
+            # Create or update customer regardless of whether they exist
+            customer, created = Customer.objects.update_or_create(
+                mobile_number=mobile_number,
+                defaults=customer_data
+            )
+
+            # Prepare CRM API parameters for AC command
+            ac_param_data = {
+                "clientId": mobile_number,
+                "firstName": serializer.validated_data.get('first_name', ""),
+                "lastName": serializer.validated_data.get('last_name', ""),
+                "email": serializer.validated_data.get('email', ""),
+                "mobileNumber": mobile_number,
+                "gender": serializer.validated_data.get('gender', ""),
+                "dateOfAnniversary": anniversary_date.strftime("%Y-%m-%d") if anniversary_date else "",
+                "dateOfBirth": birth_date.strftime("%Y-%m-%d") if birth_date else "",
+                "category": serializer.validated_data.get('category', ""),
+                "referralType": serializer.validated_data.get('referral_type', "")
+            }
+
+            # Encode the parameters into a URL-encoded string
+            ac_encoded_params = urlencode({"Param": json.dumps(ac_param_data)})
+
+            # Prepare the full CRM API URL for AC command
+            crm_ac_url = f"http://app.salonspa.in/book/bridge.ashx?key=gangatsw&cmd=AC&{ac_encoded_params}"
+
+            # Send data to the CRM API using GET request for AC command
+            try:
+                crm_ac_response = requests.get(crm_ac_url)
+                crm_ac_response.raise_for_status()  # Raise an exception for HTTP errors
+            except requests.RequestException as e:
+                return Response({'error': f'Failed to send data to CRM (AC): {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            # Prepare and return the response data
+            response_data = {
+                'customer': {
+                    'id': customer.id,
+                    'is_register': serializer.validated_data.get('is_register', ''),
+                    'mobile_number': customer.mobile_number,
+                    'email': customer.email,
+                    'first_name': customer.first_name,
+                    'last_name': customer.last_name,
+                    'birth_date': customer.birth_date.strftime("%Y-%m-%d") if customer.birth_date else None,
+                    'anniversary_date': customer.anniversary_date.strftime("%Y-%m-%d") if customer.anniversary_date else None,
+                    'gender': customer.gender
+                },
+                'crm_ac_url': crm_ac_url
+            }
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # # def send_booking_request(client_data):

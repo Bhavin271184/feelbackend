@@ -54,8 +54,9 @@ urlpatterns = [
     path('services/', ServicesListCreateView.as_view(), name='services-list-create'),
     path('services/<int:pk>/', ServicesRetrieveUpdateDestroyView.as_view(), name='services-detail'),
 
-    path('booking/', BookingView.as_view(), name='booking'),
-    path('booking/<int:pk>/', BookingView.as_view(), name='booking-delete'),
+    path('bookingawt/', BookingAWTView.as_view(), name='booking'),
+    path('bookingac/', BookingACView.as_view(), name='booking'),
+
 
     path('services/<int:pk>/update-priority/', ServicesPriorityUpdateView.as_view(), name='services-update-priority'),
     path('hero-offers/<int:pk>/update-priority/', HeroOfferPriorityUpdateView.as_view(), name='hero-offer-update-priority'),

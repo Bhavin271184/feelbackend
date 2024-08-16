@@ -339,20 +339,23 @@ class ServiceDetailSerializer(serializers.Serializer):
 
 
 
-class BookingSerializer(serializers.Serializer):
+class BookingAWTSerializer(serializers.Serializer):
     is_register = serializers.BooleanField()
     mobile_number = serializers.CharField(max_length=15)
     email = serializers.EmailField(required=False)
     first_name = serializers.CharField(max_length=100, required=False)
     last_name = serializers.CharField(max_length=100, required=False)
-    birth_date = serializers.DateField(required=False)
-    anniversary_date = serializers.DateField(required=False)
+    birth_date = serializers.DateField(required=False, allow_null=True)
+    anniversary_date = serializers.DateField(required=False, allow_null=True)
     gender = serializers.ChoiceField(choices=[('M', 'Male'), ('F', 'Female')], required=False)
     service_ids = serializers.ListField(
         child=serializers.IntegerField(),
         required=True
     )
     appointment_date = serializers.DateField(required=True)
+    expectedStartTime = serializers.CharField(max_length=4, required=False)
+    expectedEndTime = serializers.CharField(max_length=4, required=False)
+
 
     def validate(self, data):
         # Fetch or validate customer based on `is_register`
@@ -370,7 +373,7 @@ class BookingSerializer(serializers.Serializer):
             else:
                 raise serializers.ValidationError("Customer with this mobile number does not exist.")
         else:
-            required_fields = ['email', 'first_name', 'last_name', 'birth_date', 'gender']
+            required_fields = ['email', 'first_name', 'last_name','gender']
             for field in required_fields:
                 if not data.get(field):
                     raise serializers.ValidationError(f"{field} is required when 'is_register' is False.")
@@ -409,3 +412,42 @@ class BookingSerializer(serializers.Serializer):
             service.pop('appointment_date', None)
         
         return representation
+
+
+class BookingACSerializer(serializers.Serializer):
+    mobile_number = serializers.CharField(max_length=15)
+    email = serializers.EmailField(required=False)
+    first_name = serializers.CharField(max_length=100, required=False)
+    last_name = serializers.CharField(max_length=100, required=False)
+    birth_date = serializers.DateField(required=False, allow_null=True)
+    anniversary_date = serializers.DateField(required=False, allow_null=True)
+    gender = serializers.ChoiceField(choices=[('M', 'Male'), ('F', 'Female')], required=False)
+    category = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    referral_type = serializers.CharField(max_length=100, required=False, allow_blank=True)
+
+    def validate(self, data):
+        # Ensure that all required fields are present
+        required_fields = ['first_name', 'last_name', 'email', 'gender']
+        for field in required_fields:
+            if not data.get(field):
+                raise serializers.ValidationError(f"{field} is required.")
+        
+        return data
+
+    def to_representation(self, instance):
+        # Modify the representation to match the required AC param structure
+        return {
+            "cmd": "AC",
+            "Param": {
+                "clientId": instance['mobile_number'],
+                "firstName": instance['first_name'],
+                "lastName": instance['last_name'],
+                "email": instance['email'],
+                "mobileNumber": instance['mobile_number'],
+                "gender": instance['gender'],
+                "dateOfAnniversary": instance.get('anniversary_date', "").strftime("%Y-%m-%d") if instance.get('anniversary_date') else "",
+                "dateOfBirth": instance.get('birth_date', "").strftime("%Y-%m-%d") if instance.get('birth_date') else "",
+                "category": instance.get('category', ""),
+                "referralType": instance.get('referral_type', "")
+            }
+        }

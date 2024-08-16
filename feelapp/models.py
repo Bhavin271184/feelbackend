@@ -347,7 +347,7 @@ class Customer(models.Model):
     email = models.EmailField()
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    birth_date = models.DateField()
+    birth_date = models.DateField(null=True, blank=True)
     anniversary_date = models.DateField(blank=True, null=True)
     GENDER_CHOICES = [
         ('M', 'Male'),
