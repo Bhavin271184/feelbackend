@@ -217,6 +217,7 @@ class ServiceItem(models.Model):
     description = models.TextField(blank=True, null=True)
     image = models.ImageField(upload_to='service_items/', null=True, blank=True)
     logo = models.ImageField(upload_to='service_logo/', null=True, blank=True)  
+    categories = models.ForeignKey(CategoryModel, on_delete=models.CASCADE,null=True,blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):

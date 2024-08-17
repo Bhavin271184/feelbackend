@@ -558,16 +558,20 @@ class ServiceItemListCreate(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticatedForPostPatchDelete]
 
 
-def get_queryset(self):
+    def get_queryset(self):
         queryset = super().get_queryset()
         
         start_date_str = self.request.GET.get('start_date')
         end_date_str = self.request.GET.get('end_date')
-        # slug = self.request.GET.get('slug')
+        category_slug = self.request.query_params.get('category_slug', None)
 
-        # if slug:
-        #     queryset = queryset.filter(slug=slug)
-
+        if category_slug:
+            try:
+                category = CategoryModel.objects.get(slug=category_slug)
+                queryset = queryset.filter(categories=category)
+            except CategoryModel.DoesNotExist:
+                queryset = queryset.none()
+                
         if start_date_str:
             try:
                 start_date = datetime.strptime(start_date_str, '%Y-%m-%d')

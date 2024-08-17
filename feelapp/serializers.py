@@ -119,11 +119,17 @@ class UnisexServiceSerializer(serializers.ModelSerializer):
 
 
 class ServiceItemSerializer(serializers.ModelSerializer):
+    category = serializers.PrimaryKeyRelatedField(queryset=CategoryModel.objects.all(), write_only=True)
+    category_details = CategoryModelSerializer(source='categories', read_only=True)  # Match with the model's field name
+
     class Meta:
         model = ServiceItem
-        fields = ['id', 'title', 'description', 'image','logo','created_at']
+        fields = ['id', 'title', 'description', 'image', 'logo', 'category', 'category_details', 'created_at']
 
-
+    def create(self, validated_data):
+        categories = validated_data.pop('category')  # Extract categories from validated_data
+        service_item = ServiceItem.objects.create(categories=categories, **validated_data)
+        return service_item
 # ========================================================================================
 
 class MulImageSerializer(serializers.ModelSerializer):
