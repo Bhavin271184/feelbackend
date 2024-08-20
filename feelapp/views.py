@@ -190,6 +190,8 @@ class HeroOfferListCreateView(generics.ListCreateAPIView):
             print(f"Filtering up to {end_date}")  # Debug statement
             queryset = queryset.filter(created_at__lte=end_date)
 
+        queryset = queryset.order_by('priority')
+        
         return queryset
 
 class HeroOfferRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -1046,6 +1048,8 @@ class ServicesListCreateView(generics.ListCreateAPIView):
             queryset = queryset.filter(created_at__gte=start_date)
         elif end_date:
             queryset = queryset.filter(created_at__lte=end_date)
+
+        queryset = queryset.order_by('priority')
 
         return queryset
 
