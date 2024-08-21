@@ -1465,7 +1465,7 @@ class BookingAWTView(generics.ListCreateAPIView):
                 "waitTimeCode": "S",
                 "comments": "",
                 "bookedDate": serializer.validated_data['appointment_date'].strftime("%d/%m/%Y"),
-                "expectedStartTime": serializer.validated_data.get('expectedStartTime', ""),
+                # "expectedStartTime": serializer.validated_data.get('expectedStartTime', ""),
                 "expectedEndTime": serializer.validated_data.get('expectedEndTime', ""),
                 "clientId": serializer.validated_data['mobile_number'],
                 "employeeId1": "0"
@@ -1502,7 +1502,7 @@ class BookingAWTView(generics.ListCreateAPIView):
                     'gender': customer.gender
                 },
                 'appointment_date': serializer.validated_data['appointment_date'].strftime("%Y-%m-%d"),
-                'expectedStartTime': serializer.validated_data.get('expectedStartTime', ''),
+                # 'expectedStartTime': serializer.validated_data.get('expectedStartTime', ''),
                 'expectedEndTime': serializer.validated_data.get('expectedEndTime', ''),
                 'services': services,
                 'total': float(total),  # Convert Decimal to float
