@@ -3,7 +3,7 @@ from uuid import uuid4
 from django.db import models
 from django.utils import timezone
 from django.core.files.storage import default_storage
-from cloudinary.models import CloudinaryField
+# from cloudinary.models import CloudinaryField
 from django.urls import reverse
 from django.contrib.postgres.fields import ArrayField
 from django.db.models import UniqueConstraint

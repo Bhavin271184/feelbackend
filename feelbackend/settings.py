@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'feelapp',
     'rest_framework',
     'rest_framework.authtoken',
-    'cloudinary',
+    # 'cloudinary',
     'rest_framework_simplejwt',
     'corsheaders',
     'storages',
