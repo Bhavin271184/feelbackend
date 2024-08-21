@@ -1419,9 +1419,8 @@ class BookingAWTView(generics.ListCreateAPIView):
         if serializer.is_valid():
             # Handle customer creation or update
             if serializer.validated_data.get('is_register'):
-                try:
-                    customer = Customer.objects.get(mobile_number=serializer.validated_data['mobile_number'])
-                except Customer.DoesNotExist:
+                customer = Customer.objects.filter(mobile_number=serializer.validated_data['mobile_number']).first()
+                if not customer:
                     return Response({'error': 'Customer with this mobile number does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 customer_data = {
@@ -1442,24 +1441,24 @@ class BookingAWTView(generics.ListCreateAPIView):
             total = 0
             service_ids = serializer.validated_data['service_ids']
             service_fetching_errors = []
-
             services = []
+
             for service_servid in service_ids:
-                try:
-                    service = Services.objects.get(servid=service_servid)
+                service = Services.objects.filter(servid=service_servid).first()
+                if service:
                     services.append({
                         'service_id': service_servid,
                         'service_name': service.service_name,
                         'price': float(service.price)
                     })
                     total += service.price
-                except Services.DoesNotExist:
+                else:
                     service_fetching_errors.append(f"Service with servid {service_servid} does not exist.")
 
             if service_fetching_errors:
                 return Response({'service_errors': service_fetching_errors}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Prepare the CRM API parameters
+            # Prepare the CRM API parameters with transformed service IDs
             param_data = {
                 "clientInDate": serializer.validated_data['appointment_date'].strftime("%d/%m/%Y %H:%M"),
                 "waitCode": "S",
@@ -1469,9 +1468,12 @@ class BookingAWTView(generics.ListCreateAPIView):
                 "expectedStartTime": serializer.validated_data.get('expectedStartTime', ""),
                 "expectedEndTime": serializer.validated_data.get('expectedEndTime', ""),
                 "clientId": serializer.validated_data['mobile_number'],
-                "serviceId1": "0",  # Placeholder value
-                "employeeId1": "0"  # Placeholder value
+                "employeeId1": "0"
             }
+
+            # Dynamically assign service IDs to the param_data
+            for i, service_id in enumerate(service_ids, start=1):
+                param_data[f"serviceId{i}"] = str(service_id)
 
             # Encode the parameters into a URL-encoded string
             encoded_params = urlencode({"Param": str(param_data).replace("'", '"')})
@@ -1524,53 +1526,46 @@ class BookingACView(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            mobile_number = serializer.validated_data['mobile_number']
+            validated_data = serializer.validated_data
 
-            # Extract and format date fields
-            birth_date = serializer.validated_data.get('birth_date')
-            anniversary_date = serializer.validated_data.get('anniversary_date')
-
-            # Create or update customer
+            # Prepare customer data
             customer_data = {
-                'mobile_number': mobile_number,
-                'email': serializer.validated_data.get('email'),
-                'first_name': serializer.validated_data.get('first_name'),
-                'last_name': serializer.validated_data.get('last_name'),
-                'birth_date': birth_date,
-                'anniversary_date': anniversary_date,
-                'gender': serializer.validated_data.get('gender'),
+                'mobile_number': validated_data.get('mobile_number'),
+                'email': validated_data.get('email'),
+                'first_name': validated_data.get('first_name'),
+                'last_name': validated_data.get('last_name'),
+                'birth_date': validated_data.get('birth_date'),
+                'anniversary_date': validated_data.get('anniversary_date'),
+                'gender': validated_data.get('gender'),
             }
 
-            # Create or update customer regardless of whether they exist
+            # Create or update customer
             customer, created = Customer.objects.update_or_create(
-                mobile_number=mobile_number,
+                mobile_number=validated_data['mobile_number'],
                 defaults=customer_data
             )
 
-            # Prepare CRM API parameters for AC command
+            # Prepare CRM API parameters
             ac_param_data = {
-                "clientId": mobile_number,
-                "firstName": serializer.validated_data.get('first_name', ""),
-                "lastName": serializer.validated_data.get('last_name', ""),
-                "email": serializer.validated_data.get('email', ""),
-                "mobileNumber": mobile_number,
-                "gender": serializer.validated_data.get('gender', ""),
-                "dateOfAnniversary": anniversary_date.strftime("%Y-%m-%d") if anniversary_date else "",
-                "dateOfBirth": birth_date.strftime("%Y-%m-%d") if birth_date else "",
-                "category": serializer.validated_data.get('category', ""),
-                "referralType": serializer.validated_data.get('referral_type', "")
+                "clientId": validated_data['mobile_number'],
+                "firstName": validated_data.get('first_name', ""),
+                "lastName": validated_data.get('last_name', ""),
+                "email": validated_data.get('email', ""),
+                "mobileNumber": validated_data['mobile_number'],
+                "gender": validated_data.get('gender', ""),
+                "dateOfAnniversary": validated_data.get('anniversary_date').strftime("%Y-%m-%d") if validated_data.get('anniversary_date') else "",
+                "dateOfBirth": validated_data.get('birth_date').strftime("%Y-%m-%d") if validated_data.get('birth_date') else "",
+                "category": validated_data.get('category', "Regular"),
+                "referralType": validated_data.get('referral_type', "Friend")
             }
-
-            # Encode the parameters into a URL-encoded string
             ac_encoded_params = urlencode({"Param": json.dumps(ac_param_data)})
 
-            # Prepare the full CRM API URL for AC command
             crm_ac_url = f"http://app.salonspa.in/book/bridge.ashx?key=gangatsw&cmd=AC&{ac_encoded_params}"
 
-            # Send data to the CRM API using GET request for AC command
+            # Send data to CRM API
             try:
                 crm_ac_response = requests.get(crm_ac_url)
-                crm_ac_response.raise_for_status()  # Raise an exception for HTTP errors
+                crm_ac_response.raise_for_status()
             except requests.RequestException as e:
                 return Response({'error': f'Failed to send data to CRM (AC): {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -1578,7 +1573,6 @@ class BookingACView(generics.ListCreateAPIView):
             response_data = {
                 'customer': {
                     'id': customer.id,
-                    'is_register': serializer.validated_data.get('is_register', ''),
                     'mobile_number': customer.mobile_number,
                     'email': customer.email,
                     'first_name': customer.first_name,
@@ -1593,6 +1587,10 @@ class BookingACView(generics.ListCreateAPIView):
             return Response(response_data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# =======================================================================================================
+
+
 
 
 # # def send_booking_request(client_data):

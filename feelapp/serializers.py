@@ -362,7 +362,6 @@ class BookingAWTSerializer(serializers.Serializer):
     expectedStartTime = serializers.CharField(max_length=4, required=False)
     expectedEndTime = serializers.CharField(max_length=4, required=False)
 
-
     def validate(self, data):
         # Fetch or validate customer based on `is_register`
         if data['is_register']:
@@ -379,7 +378,7 @@ class BookingAWTSerializer(serializers.Serializer):
             else:
                 raise serializers.ValidationError("Customer with this mobile number does not exist.")
         else:
-            required_fields = ['email', 'first_name', 'last_name','gender']
+            required_fields = ['email', 'first_name', 'last_name', 'gender']
             for field in required_fields:
                 if not data.get(field):
                     raise serializers.ValidationError(f"{field} is required when 'is_register' is False.")
@@ -389,12 +388,11 @@ class BookingAWTSerializer(serializers.Serializer):
         service_fetching_errors = []
 
         for service_servid in data['service_ids']:
-            try:
-                # Fetch the service based on `servid`
-                service = Services.objects.get(servid=service_servid)
+            service = Services.objects.filter(servid=service_servid).first()
+            if service:
                 subtotals.append(service.price)
                 total += service.price
-            except Services.DoesNotExist:
+            else:
                 service_fetching_errors.append(f"Service with servid {service_servid} does not exist.")
 
         if service_fetching_errors:
@@ -414,8 +412,7 @@ class BookingAWTSerializer(serializers.Serializer):
         representation['appointment_date'] = instance['appointment_date']
         
         # Remove appointment_date from each service if present
-        for service in representation.get('services', []):
-            service.pop('appointment_date', None)
+        representation['service_ids'] = [str(service_id) for service_id in instance['service_ids']]
         
         return representation
 
@@ -432,28 +429,23 @@ class BookingACSerializer(serializers.Serializer):
     referral_type = serializers.CharField(max_length=100, required=False, allow_blank=True)
 
     def validate(self, data):
-        # Ensure that all required fields are present
-        required_fields = ['first_name', 'last_name', 'email', 'gender']
-        for field in required_fields:
+        # Ensure required fields are present
+        for field in ['first_name', 'last_name', 'email', 'gender']:
             if not data.get(field):
                 raise serializers.ValidationError(f"{field} is required.")
-        
         return data
 
     def to_representation(self, instance):
         # Modify the representation to match the required AC param structure
         return {
-            "cmd": "AC",
-            "Param": {
-                "clientId": instance['mobile_number'],
-                "firstName": instance['first_name'],
-                "lastName": instance['last_name'],
-                "email": instance['email'],
-                "mobileNumber": instance['mobile_number'],
-                "gender": instance['gender'],
-                "dateOfAnniversary": instance.get('anniversary_date', "").strftime("%Y-%m-%d") if instance.get('anniversary_date') else "",
-                "dateOfBirth": instance.get('birth_date', "").strftime("%Y-%m-%d") if instance.get('birth_date') else "",
-                "category": instance.get('category', ""),
-                "referralType": instance.get('referral_type', "")
-            }
+            "mobile_number": instance['mobile_number'],
+            "email": instance['email'],
+            "first_name": instance['first_name'],
+            "last_name": instance['last_name'],
+            "birth_date": instance.get('birth_date', "").strftime("%Y-%m-%d") if instance.get('birth_date') else "",
+            "anniversary_date": instance.get('anniversary_date', "").strftime("%Y-%m-%d") if instance.get('anniversary_date') else "",
+            "gender": instance['gender'],
+            "appointment_date": datetime.now().strftime("%Y-%m-%d"),  # Example current date
+            "category": instance.get('category', "Regular"),  # Default value
+            "referral_type": instance.get('referral_type', "Friend")  # Default value
         }
