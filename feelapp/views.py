@@ -1497,8 +1497,8 @@ class BookingAWTView(generics.ListCreateAPIView):
                     'email': customer.email,
                     'first_name': customer.first_name,
                     'last_name': customer.last_name,
-                    'birth_date': customer.birth_date.strftime("%Y-%m-%d") if customer.birth_date else None,
-                    'anniversary_date': customer.anniversary_date.strftime("%Y-%m-%d") if customer.anniversary_date else None,
+                    'birth_date': customer.birth_date.strftime("%d/%m/%Y 00:00") if customer.birth_date else None,
+                    'anniversary_date': customer.anniversary_date.strftime("%d/%m/%Y 00:00") if customer.anniversary_date else None,
                     'gender': customer.gender
                 },
                 'appointment_date': serializer.validated_data['appointment_date'].strftime("%Y-%m-%d"),
@@ -1553,8 +1553,8 @@ class BookingACView(generics.ListCreateAPIView):
                 "email": validated_data.get('email', ""),
                 "mobileNumber": validated_data['mobile_number'],
                 "gender": validated_data.get('gender', ""),
-                "dateOfAnniversary": validated_data.get('anniversary_date').strftime("%Y-%m-%d") if validated_data.get('anniversary_date') else "",
-                "dateOfBirth": validated_data.get('birth_date').strftime("%Y-%m-%d") if validated_data.get('birth_date') else "",
+                # "dateOfAnniversary": validated_data.get('anniversary_date').strftime("%d/%m/%Y 00:00") if validated_data.get('anniversary_date') else "",
+                # "dateOfBirth": validated_data.get('birth_date').strftime("%d/%m/%Y 00:00") if validated_data.get('birth_date') else "",
                 "category": validated_data.get('category', "Regular"),
                 "referralType": validated_data.get('referral_type', "Friend")
             }
@@ -1568,7 +1568,8 @@ class BookingACView(generics.ListCreateAPIView):
                 crm_ac_response.raise_for_status()
             except requests.RequestException as e:
                 return Response({'error': f'Failed to send data to CRM (AC): {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+            print(customer.anniversary_date)
+            print(customer.birth_date)
             # Prepare and return the response data
             response_data = {
                 'customer': {
@@ -1577,13 +1578,13 @@ class BookingACView(generics.ListCreateAPIView):
                     'email': customer.email,
                     'first_name': customer.first_name,
                     'last_name': customer.last_name,
-                    'birth_date': customer.birth_date.strftime("%Y-%m-%d") if customer.birth_date else None,
-                    'anniversary_date': customer.anniversary_date.strftime("%Y-%m-%d") if customer.anniversary_date else None,
+                    # 'birth_date': customer.birth_date.strftime("%d/%m/%Y 00:00") if customer.birth_date else None,
+                    # 'anniversary_date': customer.anniversary_date.strftime("%d/%m/%Y 00:00") if customer.anniversary_date else None,
                     'gender': customer.gender
                 },
                 'crm_ac_url': crm_ac_url
             }
-
+            # print(customer.birth_date.strftime("%d/%m/%Y 00:00"))
             return Response(response_data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
