@@ -6,8 +6,8 @@ urlpatterns = [
     path('categories/', CategoryModelListCreateView.as_view(), name='category-list-create'),
     path('categories/<int:pk>/', CategoryModelRetrieveUpdateDestroyView.as_view(), name='category-detail'),
 
-    path('services/', ServicesListCreateView.as_view(), name='services-list-create'),
-    path('services/<int:pk>/', ServicesRetrieveUpdateDestroyView.as_view(), name='services-detail'),
+    # path('services/', ServicesListCreateView.as_view(), name='services-list-create'),
+    # path('services/<int:pk>/', ServicesRetrieveUpdateDestroyView.as_view(), name='services-detail'),
 
     path('blogs/', BlogListCreateView.as_view(), name='blog-list-create'),
     path('blogs/<int:pk>/', BlogRetrieveUpdateDestroyView.as_view(), name='blog-detail'),
