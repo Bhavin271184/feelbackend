@@ -194,8 +194,8 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=365),
 }
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# MEDIA_URL = '/media/'
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
@@ -205,3 +205,4 @@ AZURE_ACCOUNT_KEY = os.getenv('AZURE_ACCOUNT_KEY')
 
 CRM_API_KEY = os.getenv('CRM_API_KEY')
 
+STATICFILES_STORAGE = 'storages.backends.azure_storage.AzureStorage'
