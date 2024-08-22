@@ -196,13 +196,28 @@ SIMPLE_JWT = {
 
 # MEDIA_URL = '/media/'
 # MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+# AZURE_ACCOUNT_NAME = os.getenv('AZURE_ACCOUNT_NAME')
+# AZURE_CONTAINER = os.getenv('AZURE_CONTAINER')
+# AZURE_ACCOUNT_KEY = os.getenv('AZURE_ACCOUNT_KEY')
+# STATICFILES_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+# AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+# AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+# AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+# AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME')
 
+# s3 bucket for image storage to aws
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
+AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
 
-DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
-AZURE_ACCOUNT_NAME = os.getenv('AZURE_ACCOUNT_NAME')
-AZURE_CONTAINER = os.getenv('AZURE_CONTAINER')
-AZURE_ACCOUNT_KEY = os.getenv('AZURE_ACCOUNT_KEY')
+# Django Storage Backend
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+AWS_S3_OBJECT_PARAMETERS = {
+    'ContentType': 'image/webp',
+}
+
 
 CRM_API_KEY = os.getenv('CRM_API_KEY')
-
-# STATICFILES_STORAGE = 'storages.backends.azure_storage.AzureStorage'
