@@ -162,6 +162,21 @@ class BrandAndProductSerializer(serializers.ModelSerializer):
         
         return instance
 
+    def update(self, instance, validated_data):
+        uploaded_images = validated_data.pop('uploaded_images', None)
+        
+        # Update the instance with non-image fields
+        instance = super().update(instance, validated_data)
+        
+        if uploaded_images:
+            # Optional: Clear existing images if needed
+            # instance.mul_images.all().delete()
+
+            for image in uploaded_images:
+                BrandAndProductMulImage.objects.create(brand=instance, image=image)
+        
+        return instance
+
 # ==============================================================================================================
 
 # class GoogleReviewSerializer(serializers.ModelSerializer):
