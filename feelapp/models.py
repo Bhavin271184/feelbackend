@@ -246,6 +246,7 @@ class BrandAndProduct(models.Model):
     description = models.TextField(blank=True, null=True)
     slug = models.SlugField(unique=True,default="")
     logo = models.ImageField(upload_to='service_logo/', null=True, blank=True)  
+    url = models.URLField(max_length=200, blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     

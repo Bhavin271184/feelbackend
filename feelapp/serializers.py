@@ -150,7 +150,7 @@ class BrandAndProductSerializer(serializers.ModelSerializer):
         write_only=True,required=False)
     class Meta:
         model = BrandAndProduct
-        fields = ['id', 'name', 'description', 'mul_images','uploaded_images','slug','logo','created_at']
+        fields = ['id', 'name', 'description','url', 'mul_images','uploaded_images','slug','logo','created_at']
 
     def create(self, validated_data):
         uploaded_images = validated_data.pop('uploaded_images', None)
