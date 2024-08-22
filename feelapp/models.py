@@ -3,7 +3,7 @@ from uuid import uuid4
 from django.db import models
 from django.utils import timezone
 from django.core.files.storage import default_storage
-from cloudinary.models import CloudinaryField
+# from cloudinary.models import CloudinaryField
 from django.urls import reverse
 from django.contrib.postgres.fields import ArrayField
 from django.db.models import UniqueConstraint
@@ -96,6 +96,16 @@ class HeroOffer(models.Model):
     mobile_image = models.ImageField(upload_to=national_mobile_hero_offer_image, blank=True, null=True)
 
     priority = models.IntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+
+def gallery_image(instance, filename):
+    ext = filename.split('.')[-1]
+    filename = f'{uuid4()}.{ext}'
+    return os.path.join('galleryimage', filename)
+
+class Galleryimage(models.Model):
+    name = models.CharField(max_length=50, blank=True, null=True)
+    image = models.ImageField(upload_to=gallery_image)
     created_at = models.DateTimeField(default=timezone.now)
 
 # ===================================================================
@@ -211,12 +221,12 @@ class UnisexService(models.Model):
     def __str__(self):
         return self.name
 
-
 class ServiceItem(models.Model):
     title = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     image = models.ImageField(upload_to='service_items/', null=True, blank=True)
     logo = models.ImageField(upload_to='service_logo/', null=True, blank=True)  
+    categories = models.ForeignKey(CategoryModel, on_delete=models.CASCADE,null=True,blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
@@ -236,6 +246,7 @@ class BrandAndProduct(models.Model):
     description = models.TextField(blank=True, null=True)
     slug = models.SlugField(unique=True,default="")
     logo = models.ImageField(upload_to='service_logo/', null=True, blank=True)  
+    url = models.URLField(max_length=200, blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     
@@ -306,7 +317,7 @@ class Services(models.Model):
     subcategory = models.ForeignKey(SubcategoryModel, on_delete=models.CASCADE,null=True,blank=True)
     childcategory = models.ForeignKey(ChildCategoryModel, on_delete=models.CASCADE,null=True,blank=True)  # No default here
     service_name = models.CharField(max_length=255, unique=True)
-    description = models.TextField()
+    description = models.TextField(blank=True, null=True)
     price = models.FloatField()
     image = models.ImageField(upload_to='services/', blank=True, null=True)
     # gender = models.CharField(max_length=255)
@@ -347,7 +358,7 @@ class Customer(models.Model):
     email = models.EmailField()
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    birth_date = models.DateField()
+    birth_date = models.DateField(null=True, blank=True)
     anniversary_date = models.DateField(blank=True, null=True)
     GENDER_CHOICES = [
         ('M', 'Male'),

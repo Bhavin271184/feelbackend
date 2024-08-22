@@ -6,8 +6,8 @@ urlpatterns = [
     path('categories/', CategoryModelListCreateView.as_view(), name='category-list-create'),
     path('categories/<int:pk>/', CategoryModelRetrieveUpdateDestroyView.as_view(), name='category-detail'),
 
-    path('services/', ServicesListCreateView.as_view(), name='services-list-create'),
-    path('services/<int:pk>/', ServicesRetrieveUpdateDestroyView.as_view(), name='services-detail'),
+    # path('services/', ServicesListCreateView.as_view(), name='services-list-create'),
+    # path('services/<int:pk>/', ServicesRetrieveUpdateDestroyView.as_view(), name='services-detail'),
 
     path('blogs/', BlogListCreateView.as_view(), name='blog-list-create'),
     path('blogs/<int:pk>/', BlogRetrieveUpdateDestroyView.as_view(), name='blog-detail'),
@@ -16,7 +16,10 @@ urlpatterns = [
 
     path('hero-offers/', HeroOfferListCreateView.as_view(), name='hero-offer-list-create'),
     path('hero-offers/<int:pk>/', HeroOfferRetrieveUpdateDestroyView.as_view(), name='hero-offer-detail'),
-# ==================================================
+
+    path('gallery-image/',GalleryimageListCreateAPIView.as_view(), name='galleyimage'),
+    path('gallery-image/<int:pk>/',GalleryimageRetrieveUpdateDestroyAPIView.as_view(), name='gallery-details'),
+
     path('haircategories/', HairCategoryListCreateAPIView.as_view(), name='haircategory-list-create'),
     path('haircategories/<int:pk>/', HairCategoryRetrieveUpdateDestroyAPIView.as_view(), name='haircategory-detail'),
 
@@ -38,7 +41,6 @@ urlpatterns = [
     path('service-items/', ServiceItemListCreate.as_view(), name='service-item-list-create'),
     path('service-items/<int:pk>/', ServiceItemRetrieveUpdateDestroy.as_view(), name='service-item-retrieve-update-destroy'),
 
-
     path('brands/', BrandAndProductListCreate.as_view(), name='brand-list-create'),
     path('brands/<int:pk>/', BrandAndProductRetrieveUpdateDestroy.as_view(), name='brand-retrieve-update-destroy'),
     
@@ -46,11 +48,6 @@ urlpatterns = [
     path('salon/<int:salon_id>/mulimage/<int:mul_image_id>/', MulImageView.as_view(), name="salon-mul-image"),
     path('mulimage/<id>/', MulImageView.as_view(), name="mulimage"),
 
-    # path('google-reviews/', GoogleReviewsView.as_view(), name='google-reviews'),
-
-    
-
-# --------------------------------------------------------------------
     path('subcategory/', SubcategoryModelListCreateView.as_view(), name='subcategory-list-create'),
     path('subcategory/<int:pk>/', SubcategoryModelDetailView.as_view(), name='subcategory-detail'),
 
@@ -60,11 +57,11 @@ urlpatterns = [
     path('services/', ServicesListCreateView.as_view(), name='services-list-create'),
     path('services/<int:pk>/', ServicesRetrieveUpdateDestroyView.as_view(), name='services-detail'),
 
-    path('booking/', BookingView.as_view(), name='booking'),
-    path('booking/<int:pk>/', BookingView.as_view(), name='booking-delete'),
-# --------------------------------------------------------------------
-    # # path('booking-request/', BookingRequestAPIView.as_view(), name='booking-request'),
-    # path('booking-request/', BookingRequestAPIView.as_view(), name='booking-request'),
+    path('bookingawt/', BookingAWTView.as_view(), name='booking'),
+    path('bookingac/', BookingACView.as_view(), name='booking'),
 
-    # path('booking1/', BookingView1.as_view(), name='booking')
+
+    path('services/<int:pk>/update-priority/', ServicesPriorityUpdateView.as_view(), name='services-update-priority'),
+    path('hero-offers/<int:pk>/update-priority/', HeroOfferPriorityUpdateView.as_view(), name='hero-offer-update-priority'),
+
 ]
