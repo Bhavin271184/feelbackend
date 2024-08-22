@@ -53,11 +53,6 @@ class HeroOfferSerializer(serializers.ModelSerializer):
         model = HeroOffer
         fields = '__all__'
 
-
-class GalleryImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Galleryimage
-        fields = ['id', 'name', 'image', 'created_at']
 # ============================================
 class HairCategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -124,17 +119,11 @@ class UnisexServiceSerializer(serializers.ModelSerializer):
 
 
 class ServiceItemSerializer(serializers.ModelSerializer):
-    category = serializers.PrimaryKeyRelatedField(queryset=CategoryModel.objects.all(), write_only=True)
-    category_details = CategoryModelSerializer(source='categories', read_only=True)  # Match with the model's field name
-    
     class Meta:
         model = ServiceItem
-        fields = ['id', 'title', 'description', 'image','categories', 'logo', 'category', 'category_details', 'created_at']
+        fields = ['id', 'title', 'description', 'image','logo','created_at']
 
-    def create(self, validated_data):
-        categories = validated_data.pop('category')  # Extract categories from validated_data
-        service_item = ServiceItem.objects.create(categories=categories, **validated_data)
-        return service_item
+
 # ========================================================================================
 
 class MulImageSerializer(serializers.ModelSerializer):
@@ -150,28 +139,13 @@ class BrandAndProductSerializer(serializers.ModelSerializer):
         write_only=True,required=False)
     class Meta:
         model = BrandAndProduct
-        fields = ['id', 'name', 'description','url', 'mul_images','uploaded_images','slug','logo','created_at']
+        fields = ['id', 'name', 'description', 'mul_images','uploaded_images','slug','logo','created_at']
 
     def create(self, validated_data):
         uploaded_images = validated_data.pop('uploaded_images', None)
         instance = BrandAndProduct.objects.create(**validated_data)
         
         if uploaded_images:
-            for image in uploaded_images:
-                BrandAndProductMulImage.objects.create(brand=instance, image=image)
-        
-        return instance
-
-    def update(self, instance, validated_data):
-        uploaded_images = validated_data.pop('uploaded_images', None)
-        
-        # Update the instance with non-image fields
-        instance = super().update(instance, validated_data)
-        
-        if uploaded_images:
-            # Optional: Clear existing images if needed
-            # instance.mul_images.all().delete()
-
             for image in uploaded_images:
                 BrandAndProductMulImage.objects.create(brand=instance, image=image)
         
@@ -291,96 +265,20 @@ class ServiceDetailSerializer(serializers.Serializer):
     price = serializers.DecimalField(max_digits=10, decimal_places=2)
     quantity = serializers.IntegerField()
 
-# class BookingSerializer(serializers.Serializer):
-#     is_register = serializers.BooleanField()
-#     mobile_number = serializers.CharField(max_length=15)
-#     email = serializers.EmailField(required=False)
-#     first_name = serializers.CharField(max_length=100, required=False)
-#     last_name = serializers.CharField(max_length=100, required=False)
-#     birth_date = serializers.DateField(required=False)
-#     anniversary_date = serializers.DateField(required=False)
-#     gender = serializers.ChoiceField(choices=[('M', 'Male'), ('F', 'Female')], required=False)
-#     service_ids = serializers.ListField(
-#         child=serializers.IntegerField(),
-#         required=True
-#     )
-#     appointment_date = serializers.DateField(required=True)
-
-#     def validate(self, data):
-#         # Fetch or validate customer based on `is_register`
-#         if data['is_register']:
-#             customer = Customer.objects.filter(mobile_number=data['mobile_number']).first()
-#             if customer:
-#                 data.update({
-#                     'email': customer.email,
-#                     'first_name': customer.first_name,
-#                     'last_name': customer.last_name,
-#                     'birth_date': customer.birth_date,
-#                     'anniversary_date': customer.anniversary_date,
-#                     'gender': customer.gender
-#                 })
-#             else:
-#                 raise serializers.ValidationError("Customer with this mobile number does not exist.")
-#         else:
-#             required_fields = ['email', 'first_name', 'last_name', 'birth_date', 'gender']
-#             for field in required_fields:
-#                 if not data.get(field):
-#                     raise serializers.ValidationError(f"{field} is required when 'is_register' is False.")
-
-#         subtotals = []
-#         total = 0
-#         service_fetching_errors = []
-
-#         for service_id in data['service_servid']:
-#             try:
-#                 # Fetch the service based on ID
-#                 service = Services.objects.get(id=service_id)
-#                 subtotals.append(service.price)
-#                 total += service.price
-#             except Services.DoesNotExist:
-#                 service_fetching_errors.append(f"Service with ID {service_id} does not exist.")
-
-#         if service_fetching_errors:
-#             raise serializers.ValidationError({"service_errors": service_fetching_errors})
-
-#         # Add calculated subtotals and total to the validated data
-#         data['subtotals'] = subtotals
-#         data['total'] = total
-
-#         return data
-
-#     def to_representation(self, instance):
-#         # Modify the representation to include `appointment_date` outside the services array
-#         representation = super().to_representation(instance)
-
-#         # Add the appointment_date to the top level
-#         representation['appointment_date'] = instance['appointment_date']
-        
-#         # Remove appointment_date from each service if present
-#         for service in representation.get('services', []):
-#             service.pop('appointment_date', None)
-        
-#         return representation
-
-
-
-
-class BookingAWTSerializer(serializers.Serializer):
+class BookingSerializer(serializers.Serializer):
     is_register = serializers.BooleanField()
     mobile_number = serializers.CharField(max_length=15)
     email = serializers.EmailField(required=False)
     first_name = serializers.CharField(max_length=100, required=False)
     last_name = serializers.CharField(max_length=100, required=False)
-    birth_date = serializers.DateField(required=False, allow_null=True)
-    anniversary_date = serializers.DateField(required=False, allow_null=True)
+    birth_date = serializers.DateField(required=False)
+    anniversary_date = serializers.DateField(required=False)
     gender = serializers.ChoiceField(choices=[('M', 'Male'), ('F', 'Female')], required=False)
     service_ids = serializers.ListField(
         child=serializers.IntegerField(),
         required=True
     )
     appointment_date = serializers.DateField(required=True)
-    expectedStartTime = serializers.CharField(max_length=4, required=False)
-    expectedEndTime = serializers.CharField(max_length=4, required=False)
 
     def validate(self, data):
         # Fetch or validate customer based on `is_register`
@@ -398,7 +296,7 @@ class BookingAWTSerializer(serializers.Serializer):
             else:
                 raise serializers.ValidationError("Customer with this mobile number does not exist.")
         else:
-            required_fields = ['email', 'first_name', 'last_name', 'gender']
+            required_fields = ['email', 'first_name', 'last_name', 'birth_date', 'gender']
             for field in required_fields:
                 if not data.get(field):
                     raise serializers.ValidationError(f"{field} is required when 'is_register' is False.")
@@ -407,13 +305,14 @@ class BookingAWTSerializer(serializers.Serializer):
         total = 0
         service_fetching_errors = []
 
-        for service_servid in data['service_ids']:
-            service = Services.objects.filter(servid=service_servid).first()
-            if service:
+        for service_id in data['service_ids']:
+            try:
+                # Fetch the service based on ID
+                service = Services.objects.get(id=service_id)
                 subtotals.append(service.price)
                 total += service.price
-            else:
-                service_fetching_errors.append(f"Service with servid {service_servid} does not exist.")
+            except Services.DoesNotExist:
+                service_fetching_errors.append(f"Service with ID {service_id} does not exist.")
 
         if service_fetching_errors:
             raise serializers.ValidationError({"service_errors": service_fetching_errors})
@@ -432,40 +331,7 @@ class BookingAWTSerializer(serializers.Serializer):
         representation['appointment_date'] = instance['appointment_date']
         
         # Remove appointment_date from each service if present
-        representation['service_ids'] = [str(service_id) for service_id in instance['service_ids']]
+        for service in representation.get('services', []):
+            service.pop('appointment_date', None)
         
         return representation
-
-
-class BookingACSerializer(serializers.Serializer):
-    mobile_number = serializers.CharField(max_length=15)
-    email = serializers.EmailField(required=False)
-    first_name = serializers.CharField(max_length=100, required=False)
-    last_name = serializers.CharField(max_length=100, required=False)
-    birth_date = serializers.DateField(required=False, allow_null=True)
-    anniversary_date = serializers.DateField(required=False, allow_null=True)
-    gender = serializers.ChoiceField(choices=[('M', 'Male'), ('F', 'Female')], required=False)
-    category = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    referral_type = serializers.CharField(max_length=100, required=False, allow_blank=True)
-
-    def validate(self, data):
-        # Ensure required fields are present
-        for field in ['first_name', 'last_name', 'email', 'gender']:
-            if not data.get(field):
-                raise serializers.ValidationError(f"{field} is required.")
-        return data
-
-    def to_representation(self, instance):
-        # Modify the representation to match the required AC param structure
-        return {
-            "mobile_number": instance['mobile_number'],
-            "email": instance['email'],
-            "first_name": instance['first_name'],
-            "last_name": instance['last_name'],
-            "birth_date": instance.get('birth_date', "").strftime("%Y-%m-%d") if instance.get('birth_date') else "",
-            "anniversary_date": instance.get('anniversary_date', "").strftime("%Y-%m-%d") if instance.get('anniversary_date') else "",
-            "gender": instance['gender'],
-            "appointment_date": datetime.now().strftime("%Y-%m-%d"),  # Example current date
-            "category": instance.get('category', "Regular"),  # Default value
-            "referral_type": instance.get('referral_type', "Friend")  # Default value
-        }

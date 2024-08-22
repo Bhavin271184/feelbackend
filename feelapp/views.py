@@ -66,7 +66,7 @@ class CategoryModelListCreateView(generics.ListCreateAPIView):
             print(f"Filtering up to {end_date}")  # Debug statement
             queryset = queryset.filter(created_at__lte=end_date)
 
-        return queryset #hhh
+        return queryset
 
 
 class CategoryModelRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -190,8 +190,6 @@ class HeroOfferListCreateView(generics.ListCreateAPIView):
             print(f"Filtering up to {end_date}")  # Debug statement
             queryset = queryset.filter(created_at__lte=end_date)
 
-        queryset = queryset.order_by('priority')
-        
         return queryset
 
 class HeroOfferRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -237,18 +235,6 @@ def DashboardView(request):
         result[custom_name] = count
 
     return JsonResponse(result)
-
-class GalleryimageListCreateAPIView(generics.ListCreateAPIView):
-    queryset = Galleryimage.objects.all().order_by('-created_at')
-    serializer_class = GalleryImageSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticatedForPostPatchDelete]
-
-class GalleryimageRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Galleryimage.objects.all()
-    serializer_class = GalleryImageSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticatedForPostPatchDelete]
 
 # ==============================================================================================================
 class HairCategoryListCreateAPIView(generics.ListCreateAPIView):
@@ -572,20 +558,16 @@ class ServiceItemListCreate(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticatedForPostPatchDelete]
 
 
-    def get_queryset(self):
+def get_queryset(self):
         queryset = super().get_queryset()
         
         start_date_str = self.request.GET.get('start_date')
         end_date_str = self.request.GET.get('end_date')
-        category_slug = self.request.query_params.get('category_slug', None)
+        # slug = self.request.GET.get('slug')
 
-        if category_slug:
-            try:
-                category = CategoryModel.objects.get(slug=category_slug)
-                queryset = queryset.filter(categories=category)
-            except CategoryModel.DoesNotExist:
-                queryset = queryset.none()
-                
+        # if slug:
+        #     queryset = queryset.filter(slug=slug)
+
         if start_date_str:
             try:
                 start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
@@ -1061,22 +1043,20 @@ class ServicesListCreateView(generics.ListCreateAPIView):
         elif end_date:
             queryset = queryset.filter(created_at__lte=end_date)
 
-        queryset = queryset.order_by('priority')
-
         return queryset
 
     def perform_create(self, serializer):
         childcategory = serializer.validated_data.get('childcategory')
 
+        # Check if the childcategory is provided
         if childcategory:
-            # If childcategory is provided, calculate the new priority
             max_priority = Services.objects.filter(childcategory=childcategory).aggregate(Max('priority'))['priority__max'] or 0
             new_priority = max_priority + 1
-            # Save with the calculated priority
             serializer.save(priority=new_priority)
         else:
-            # If childcategory is not provided, save without modifying priority
+            # Save without setting priority if childcategory is not provided
             serializer.save()
+
 
 
 class ServicesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -1085,364 +1065,50 @@ class ServicesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticatedForPostPatchDelete]
 
     def perform_update(self, serializer):
-        childcategory = serializer.validated_data.get('childcategory')
+        childcategory = serializer.validated_data.get('childcategory', serializer.instance.childcategory)
+        
+        if not childcategory:
+            raise ValidationError("Child category must be provided.")
 
-        if childcategory:
-            # If childcategory is provided, calculate the new priority
-            max_priority = Services.objects.filter(childcategory=childcategory).aggregate(Max('priority'))['priority__max'] or 0
-            new_priority = max_priority + 1
-            # Save with the calculated priority
-            serializer.save(priority=new_priority)
+        # Handle priority updates
+        priority = serializer.validated_data.get('priority', None)
+        if priority is not None:
+            # Check if priority conflicts with existing priorities
+            if Services.objects.filter(childcategory=childcategory, priority=priority).exclude(id=self.kwargs['pk']).exists():
+                max_priority = Services.objects.filter(childcategory=childcategory).aggregate(models.Max('priority'))['priority__max'] or 0
+                priority = max_priority + 1
+            
+            serializer.save(priority=priority)
         else:
-            # If childcategory is not provided, save without modifying priority
             serializer.save()
 
 # ------------------------------------=====================================================================
 from django.conf import settings
 from urllib.parse import urlencode
 
-# class BookingView(generics.ListCreateAPIView):
-#     authentication_classes = []
-#     permission_classes = [AllowAny]
-#     serializer_class = BookingSerializer
-
-#     def post(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data)
-#         if serializer.is_valid():
-#             # Handle customer creation or update
-#             if serializer.validated_data['is_register']:
-#                 try:
-#                     customer = Customer.objects.get(mobile_number=serializer.validated_data['mobile_number'])
-#                 except Customer.DoesNotExist:
-#                     return Response({'error': 'Customer with this mobile number does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
-#             else:
-#                 customer_data = {
-#                     'mobile_number': serializer.validated_data['mobile_number'],
-#                     'email': serializer.validated_data['email'],
-#                     'first_name': serializer.validated_data['first_name'],
-#                     'last_name': serializer.validated_data['last_name'],
-#                     'birth_date': serializer.validated_data['birth_date'],
-#                     'anniversary_date': serializer.validated_data.get('anniversary_date', None),
-#                     'gender': serializer.validated_data['gender'],
-#                 }
-#                 customer, created = Customer.objects.update_or_create(
-#                     mobile_number=serializer.validated_data['mobile_number'],
-#                     defaults=customer_data
-#                 )
-
-#             # Fetch service details and prepare the service data
-#             total = 0
-#             service_ids = serializer.validated_data['service_ids']
-#             service_fetching_errors = []
-
-#             services = []
-#             for service_id in service_ids:
-#                 try:
-#                     service = Services.objects.get(id=service_id)
-#                     services.append({
-#                         'service_id': service_id,
-#                         'service_name': service.service_name,
-#                         'price': float(service.price)
-#                     })
-#                     total += service.price
-#                 except Services.DoesNotExist:
-#                     service_fetching_errors.append(f"Service with ID {service_id} does not exist.")
-
-#             if service_fetching_errors:
-#                 return Response({'service_errors': service_fetching_errors}, status=status.HTTP_400_BAD_REQUEST)
-
-#             # Prepare the CRM API parameters
-#             param_data = {
-#                 "clientInDate": serializer.validated_data['appointment_date'].strftime("%d/%m/%Y %H:%M"),
-#                 "waitCode": "S",
-#                 "waitTimeCode": "S",
-#                 "comments": "",
-#                 "bookedDate": serializer.validated_data['appointment_date'].strftime("%d/%m/%Y"),
-#                 "expectedStartTime": "1530",  # Placeholder value
-#                 "expectedEndTime": "1530",  # Placeholder value
-#                 "clientId": serializer.validated_data['mobile_number'],
-#                 "serviceId1": "0",  # Placeholder value
-#                 "employeeId1": "0"  # Placeholder value
-#             }
-
-#             # Encode the parameters into a URL-encoded string
-#             encoded_params = urlencode({"Param": str(param_data).replace("'", '"')})
-
-#             # Prepare the full CRM API URL
-#             crm_url = f"http://app.salonspa.in/book/bridge.ashx?key=gangatsw&cmd=AWT&{encoded_params}"
-
-#             # Send data to the CRM API using GET request
-#             try:
-#                 crm_response = requests.get(crm_url)
-#                 crm_response.raise_for_status()  # Raise an exception for HTTP errors
-#             except requests.RequestException as e:
-#                 return Response({'error': f'Failed to send data to CRM: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-#             # Prepare and return the response data
-#             response_data = {
-#                 'customer': {
-#                     'id': customer.id,
-#                     'is_register': serializer.validated_data['is_register'],
-#                     'mobile_number': customer.mobile_number,
-#                     'email': customer.email,
-#                     'first_name': customer.first_name,
-#                     'last_name': customer.last_name,
-#                     'birth_date': customer.birth_date.strftime("%Y-%m-%d"),
-#                     'anniversary_date': customer.anniversary_date.strftime("%Y-%m-%d") if customer.anniversary_date else None,
-#                     'gender': customer.gender
-#                 },
-#                 'appointment_date': serializer.validated_data['appointment_date'].strftime("%Y-%m-%d"),
-#                 'services': services,
-#                 'total': float(total),  # Convert Decimal to float
-#                 'crm_url': crm_url
-#             }
-
-#             return Response(response_data, status=status.HTTP_201_CREATED)
-
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-from rest_framework import generics, status
-from rest_framework.response import Response
-from django.db import transaction
-from django.db.models import F, Max
-class BaseNormalPriorityUpdateView(generics.UpdateAPIView):
-    field_name = 'priority'  # Default field name for priority
-    permission_classes = [IsAuthenticatedForPostPatchDelete]
-
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        new_priority = request.data.get(self.field_name)
-
-        if new_priority is not None:
-            new_priority = int(new_priority)
-
-            if new_priority >= 0:  # Check if the priority is non-negative
-                with transaction.atomic():
-                    max_priority = self.get_max_priority()
-
-                    if new_priority > max_priority:
-                        new_priority = max_priority
-
-                    self.update_priority(instance, new_priority, self.field_name)
-                    serializer = self.get_serializer(instance)
-                    return Response(serializer.data)
-            else:
-                return Response({"detail": f"{self.field_name.capitalize()} must be a non-negative integer."}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"detail": f"{self.field_name.capitalize()} is required in the request data."}, status=status.HTTP_400_BAD_REQUEST)
-
-    def get_max_priority(self):
-        max_priority = self.queryset.aggregate(Max(self.field_name))[f'{self.field_name}__max']
-        return max_priority if max_priority is not None else 0
-
-    def update_priority(self, instance, new_priority, field_name):
-        with transaction.atomic():
-            # Lock the rows based on the field_name
-            items = self.queryset.select_for_update().all()
-
-            old_priority = getattr(instance, field_name)
-
-            # Temporarily set the priority of the instance to the new_priority
-            setattr(instance, field_name, new_priority)
-            instance.save(update_fields=[field_name])
-
-            if new_priority < old_priority:
-                # If the object is moving up in priority, increment the priorities of the objects with lesser or equal priority
-                objects_to_update = items.filter(**{f'{field_name}__lt': old_priority, f'{field_name}__gte': new_priority}).order_by('-' + field_name)
-                objects_to_update.update(**{field_name: F(field_name) + 1})
-
-            elif new_priority > old_priority:
-                # If the object is moving down in priority, decrement the priorities of the objects in between
-                objects_to_update = items.filter(**{f'{field_name}__gt': old_priority, f'{field_name}__lte': new_priority}).order_by(field_name)
-                objects_to_update.update(**{field_name: F(field_name) - 1})
-
-            # Set the priority of the instance to the new_priority
-            setattr(instance, field_name, new_priority)
-            instance.save(update_fields=[field_name])
-
-
-
-class ServicesPriorityUpdateView(BaseNormalPriorityUpdateView):
-    queryset = Services.objects.all()
-    serializer_class = ServicesSerializer
-    field_name = 'priority' 
-    # permission_classes = [IsAuthenticatedForPostPatchDelete]
-
-
-
-class HeroOfferPriorityUpdateView(BaseNormalPriorityUpdateView):
-    queryset = HeroOffer.objects.all()
-    serializer_class = HeroOfferSerializer
-    field_name = 'priority'  
-
-
-
-
-import json
-# # AWT working  code is on the line  1330 to 1428 
-# class BookingView(generics.ListCreateAPIView):
-#     authentication_classes = []
-#     permission_classes = [AllowAny]
-#     serializer_class = BookingSerializer
-
-#     def post(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data)
-#         if serializer.is_valid():
-#             mobile_number = serializer.validated_data['mobile_number']
-#             is_register = serializer.validated_data['is_register']
-#             appointment_date = serializer.validated_data['appointment_date']
-#             service_ids = serializer.validated_data['service_ids']
-#             total = 0
-#             service_fetching_errors = []
-
-#             # Handle customer creation or update
-#             if is_register:
-#                 try:
-#                     customer = Customer.objects.get(mobile_number=mobile_number)
-#                 except Customer.DoesNotExist:
-#                     return Response({'error': 'Customer with this mobile number does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
-#             else:
-#                 customer_data = {
-#                     'mobile_number': mobile_number,
-#                     'email': serializer.validated_data['email'],
-#                     'first_name': serializer.validated_data['first_name'],
-#                     'last_name': serializer.validated_data['last_name'],
-#                     'birth_date': serializer.validated_data['birth_date'],
-#                     'anniversary_date': serializer.validated_data.get('anniversary_date', None),
-#                     'gender': serializer.validated_data['gender'],
-#                 }
-#                 customer, created = Customer.objects.update_or_create(
-#                     mobile_number=mobile_number,
-#                     defaults=customer_data
-#                 )
-
-#             # Fetch service details and calculate total
-#             services = []
-#             for service_servid in service_ids:
-#                 try:
-#                     service = Services.objects.get(servid=service_servid)
-#                     services.append({
-#                         'service_id': service_servid,
-#                         'service_name': service.service_name,
-#                         'price': float(service.price)
-#                     })
-#                     total += service.price
-#                 except Services.DoesNotExist:
-#                     service_fetching_errors.append(f"Service with servid {service_servid} does not exist.")
-
-#             if service_fetching_errors:
-#                 return Response({'service_errors': service_fetching_errors}, status=status.HTTP_400_BAD_REQUEST)
-
-#             # Prepare CRM API parameters
-#             param_data = {
-#                 "clientInDate": appointment_date.strftime("%d/%m/%Y %H:%M"),
-#                 "waitCode": "S",
-#                 "waitTimeCode": "S",
-#                 "comments": "",
-#                 "bookedDate": appointment_date.strftime("%d/%m/%Y"),
-#                 "expectedStartTime": "1530",  # Placeholder value
-#                 "expectedEndTime": "1530",  # Placeholder value
-#                 "clientId": mobile_number,
-#                 "serviceId1": "0",  # Placeholder value
-#                 "employeeId1": "0"  # Placeholder value
-#             }
-
-#             encoded_wait_list_params = urlencode({"Param": json.dumps(param_data)})
-#             wait_list_url = f"http://app.salonspa.in/book/bridge.ashx?key=gangatsw&cmd=AWT&{encoded_wait_list_params}"
-
-#             client_param_data = {
-#                 "clientId": mobile_number,
-#                 "firstName": serializer.validated_data['first_name'],
-#                 "lastName": serializer.validated_data['last_name'],
-#                 "email": serializer.validated_data['email'],
-#                 "mobileNumber": mobile_number,
-#                 "gender": serializer.validated_data['gender'],
-#                 "dateOfAnniversary": serializer.validated_data.get('anniversary_date', "").strftime("%d/%m/%Y") if serializer.validated_data.get('anniversary_date') else "",
-#                 "dateOfBirth": serializer.validated_data['birth_date'].strftime("%d/%m/%Y"),
-#                 "category": "",  # Optional
-#                 "referralType": ""  # Optional
-#             }
-
-#             encoded_client_params = urlencode({"Param": json.dumps(client_param_data)})
-#             create_client_url = f"http://app.salonspa.in/book/bridge.ashx?key=gangatsw&cmd=AC&{encoded_client_params}"
-
-#             # Check if the client exists in CRM and handle accordingly
-#             try:
-#                 # First, try adding to the waiting list
-#                 crm_response = requests.get(wait_list_url)
-#                 crm_response.raise_for_status()
-#                 crm_response_data = crm_response.json()
-
-#                 if crm_response_data.get("errorCode") == "1003":
-#                     # Client not found, create new client
-#                     crm_create_client_response = requests.get(create_client_url)
-#                     crm_create_client_response.raise_for_status()
-#                     create_client_response_data = crm_create_client_response.json()
-
-#                     if create_client_response_data.get("errorCode") == "0":  # Assuming 0 is success
-#                         # Retry adding to waiting list
-#                         crm_response = requests.get(wait_list_url)
-#                         crm_response.raise_for_status()
-#                         crm_response_data = crm_response.json()
-#                     else:
-#                         return Response({
-#                             'error': f'Failed to create new client in CRM. Response: {create_client_response_data}'
-#                         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-#                 # Prepare and return the response data
-#                 response_data = {
-#                     'customer': {
-#                         'id': customer.id,
-#                         'is_register': is_register,
-#                         'mobile_number': customer.mobile_number,
-#                         'email': customer.email,
-#                         'first_name': customer.first_name,
-#                         'last_name': customer.last_name,
-#                         'birth_date': customer.birth_date.strftime("%Y-%m-%d"),
-#                         'anniversary_date': customer.anniversary_date.strftime("%Y-%m-%d") if customer.anniversary_date else None,
-#                         'gender': customer.gender
-#                     },
-#                     'appointment_date': appointment_date.strftime("%Y-%m-%d"),
-#                     'services': services,
-#                     'total': float(total),  # Convert Decimal to float
-#                     'crm_wait_list_url': wait_list_url,
-#                     'crm_create_client_url': create_client_url,
-#                     'crm_response': crm_response_data
-#                 }
-
-#                 return Response(response_data, status=status.HTTP_201_CREATED)
-
-#             except requests.RequestException as e:
-#                 return Response({
-#                     'error': f'Failed to communicate with CRM: {str(e)}'
-#                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class BookingAWTView(generics.ListCreateAPIView):
+class BookingView(generics.ListCreateAPIView):
     authentication_classes = []
     permission_classes = [AllowAny]
-    serializer_class = BookingAWTSerializer
+    serializer_class = BookingSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             # Handle customer creation or update
-            if serializer.validated_data.get('is_register'):
-                customer = Customer.objects.filter(mobile_number=serializer.validated_data['mobile_number']).first()
-                if not customer:
+            if serializer.validated_data['is_register']:
+                try:
+                    customer = Customer.objects.get(mobile_number=serializer.validated_data['mobile_number'])
+                except Customer.DoesNotExist:
                     return Response({'error': 'Customer with this mobile number does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 customer_data = {
                     'mobile_number': serializer.validated_data['mobile_number'],
-                    'email': serializer.validated_data.get('email', ''),
-                    'first_name': serializer.validated_data.get('first_name', ''),
-                    'last_name': serializer.validated_data.get('last_name', ''),
-                    'birth_date': serializer.validated_data.get('birth_date', None),
+                    'email': serializer.validated_data['email'],
+                    'first_name': serializer.validated_data['first_name'],
+                    'last_name': serializer.validated_data['last_name'],
+                    'birth_date': serializer.validated_data['birth_date'],
                     'anniversary_date': serializer.validated_data.get('anniversary_date', None),
-                    'gender': serializer.validated_data.get('gender', ''),
+                    'gender': serializer.validated_data['gender'],
                 }
                 customer, created = Customer.objects.update_or_create(
                     mobile_number=serializer.validated_data['mobile_number'],
@@ -1453,39 +1119,36 @@ class BookingAWTView(generics.ListCreateAPIView):
             total = 0
             service_ids = serializer.validated_data['service_ids']
             service_fetching_errors = []
-            services = []
 
-            for service_servid in service_ids:
-                service = Services.objects.filter(servid=service_servid).first()
-                if service:
+            services = []
+            for service_id in service_ids:
+                try:
+                    service = Services.objects.get(id=service_id)
                     services.append({
-                        'service_id': service_servid,
+                        'service_id': service_id,
                         'service_name': service.service_name,
                         'price': float(service.price)
                     })
                     total += service.price
-                else:
-                    service_fetching_errors.append(f"Service with servid {service_servid} does not exist.")
+                except Services.DoesNotExist:
+                    service_fetching_errors.append(f"Service with ID {service_id} does not exist.")
 
             if service_fetching_errors:
                 return Response({'service_errors': service_fetching_errors}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Prepare the CRM API parameters with transformed service IDs
+            # Prepare the CRM API parameters
             param_data = {
                 "clientInDate": serializer.validated_data['appointment_date'].strftime("%d/%m/%Y %H:%M"),
                 "waitCode": "S",
                 "waitTimeCode": "S",
                 "comments": "",
                 "bookedDate": serializer.validated_data['appointment_date'].strftime("%d/%m/%Y"),
-                # "expectedStartTime": serializer.validated_data.get('expectedStartTime', ""),
-                "expectedEndTime": serializer.validated_data.get('expectedEndTime', ""),
+                "expectedStartTime": "1530",  # Placeholder value
+                "expectedEndTime": "1530",  # Placeholder value
                 "clientId": serializer.validated_data['mobile_number'],
-                "employeeId1": "0"
+                "serviceId1": "0",  # Placeholder value
+                "employeeId1": "0"  # Placeholder value
             }
-
-            # Dynamically assign service IDs to the param_data
-            for i, service_id in enumerate(service_ids, start=1):
-                param_data[f"serviceId{i}"] = str(service_id)
 
             # Encode the parameters into a URL-encoded string
             encoded_params = urlencode({"Param": str(param_data).replace("'", '"')})
@@ -1504,18 +1167,16 @@ class BookingAWTView(generics.ListCreateAPIView):
             response_data = {
                 'customer': {
                     'id': customer.id,
-                    'is_register': serializer.validated_data.get('is_register', ''),
+                    'is_register': serializer.validated_data['is_register'],
                     'mobile_number': customer.mobile_number,
                     'email': customer.email,
                     'first_name': customer.first_name,
                     'last_name': customer.last_name,
-                    'birth_date': customer.birth_date.strftime("%d/%m/%Y 00:00") if customer.birth_date else None,
-                    'anniversary_date': customer.anniversary_date.strftime("%d/%m/%Y 00:00") if customer.anniversary_date else None,
+                    'birth_date': customer.birth_date.strftime("%Y-%m-%d"),
+                    'anniversary_date': customer.anniversary_date.strftime("%Y-%m-%d") if customer.anniversary_date else None,
                     'gender': customer.gender
                 },
                 'appointment_date': serializer.validated_data['appointment_date'].strftime("%Y-%m-%d"),
-                # 'expectedStartTime': serializer.validated_data.get('expectedStartTime', ''),
-                'expectedEndTime': serializer.validated_data.get('expectedEndTime', ''),
                 'services': services,
                 'total': float(total),  # Convert Decimal to float
                 'crm_url': crm_url
@@ -1524,87 +1185,6 @@ class BookingAWTView(generics.ListCreateAPIView):
             return Response(response_data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-from urllib.parse import urlencode
-from rest_framework import status
-from rest_framework.response import Response
-import requests
-
-class BookingACView(generics.ListCreateAPIView):
-    authentication_classes = []
-    permission_classes = [AllowAny]
-    serializer_class = BookingACSerializer
-
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            validated_data = serializer.validated_data
-
-            # Prepare customer data
-            customer_data = {
-                'mobile_number': validated_data.get('mobile_number'),
-                'email': validated_data.get('email'),
-                'first_name': validated_data.get('first_name'),
-                'last_name': validated_data.get('last_name'),
-                'birth_date': validated_data.get('birth_date'),
-                'anniversary_date': validated_data.get('anniversary_date'),
-                'gender': validated_data.get('gender'),
-            }
-
-            # Create or update customer
-            customer, created = Customer.objects.update_or_create(
-                mobile_number=validated_data['mobile_number'],
-                defaults=customer_data
-            )
-
-            # Prepare CRM API parameters
-            ac_param_data = {
-                "clientId": validated_data['mobile_number'],
-                "firstName": validated_data.get('first_name', ""),
-                "lastName": validated_data.get('last_name', ""),
-                "email": validated_data.get('email', ""),
-                "mobileNumber": validated_data['mobile_number'],
-                "gender": validated_data.get('gender', ""),
-                # "dateOfAnniversary": validated_data.get('anniversary_date').strftime("%d/%m/%Y 00:00") if validated_data.get('anniversary_date') else "",
-                # "dateOfBirth": validated_data.get('birth_date').strftime("%d/%m/%Y 00:00") if validated_data.get('birth_date') else "",
-                "category": validated_data.get('category', "Regular"),
-                "referralType": validated_data.get('referral_type', "Friend")
-            }
-            ac_encoded_params = urlencode({"Param": json.dumps(ac_param_data)})
-
-            crm_ac_url = f"http://app.salonspa.in/book/bridge.ashx?key=gangatsw&cmd=AC&{ac_encoded_params}"
-
-            # Send data to CRM API
-            try:
-                crm_ac_response = requests.get(crm_ac_url)
-                crm_ac_response.raise_for_status()
-            except requests.RequestException as e:
-                return Response({'error': f'Failed to send data to CRM (AC): {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            print(customer.anniversary_date)
-            print(customer.birth_date)
-            # Prepare and return the response data
-            response_data = {
-                'customer': {
-                    'id': customer.id,
-                    'mobile_number': customer.mobile_number,
-                    'email': customer.email,
-                    'first_name': customer.first_name,
-                    'last_name': customer.last_name,
-                    # 'birth_date': customer.birth_date.strftime("%d/%m/%Y 00:00") if customer.birth_date else None,
-                    # 'anniversary_date': customer.anniversary_date.strftime("%d/%m/%Y 00:00") if customer.anniversary_date else None,
-                    'gender': customer.gender
-                },
-                'crm_ac_url': crm_ac_url
-            }
-            # print(customer.birth_date.strftime("%d/%m/%Y 00:00"))
-            return Response(response_data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# =======================================================================================================
-
-
-
 
 # # def send_booking_request(client_data):
 # #     url = 'https://app.salonspa.in/book/bridge.ashx'
