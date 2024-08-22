@@ -53,6 +53,11 @@ class HeroOfferSerializer(serializers.ModelSerializer):
         model = HeroOffer
         fields = '__all__'
 
+
+class GalleryImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Galleryimage
+        fields = ['id', 'name', 'image', 'created_at']
 # ============================================
 class HairCategorySerializer(serializers.ModelSerializer):
     class Meta:

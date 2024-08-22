@@ -98,6 +98,16 @@ class HeroOffer(models.Model):
     priority = models.IntegerField(default=0)
     created_at = models.DateTimeField(default=timezone.now)
 
+def gallery_image(instance, filename):
+    ext = filename.split('.')[-1]
+    filename = f'{uuid4()}.{ext}'
+    return os.path.join('galleryimage', filename)
+
+class Galleryimage(models.Model):
+    name = models.CharField(max_length=50, blank=True, null=True)
+    image = models.ImageField(upload_to=gallery_image)
+    created_at = models.DateTimeField(default=timezone.now)
+
 # ===================================================================
 
 class HairCategory(models.Model):

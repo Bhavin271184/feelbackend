@@ -17,6 +17,9 @@ urlpatterns = [
     path('hero-offers/', HeroOfferListCreateView.as_view(), name='hero-offer-list-create'),
     path('hero-offers/<int:pk>/', HeroOfferRetrieveUpdateDestroyView.as_view(), name='hero-offer-detail'),
 
+    path('gallery-image/',GalleryimageListCreateAPIView.as_view(), name='galleyimage'),
+    path('gallery-image/<int:pk>/',GalleryimageRetrieveUpdateDestroyAPIView.as_view(), name='gallery-details'),
+
     path('haircategories/', HairCategoryListCreateAPIView.as_view(), name='haircategory-list-create'),
     path('haircategories/<int:pk>/', HairCategoryRetrieveUpdateDestroyAPIView.as_view(), name='haircategory-detail'),
 

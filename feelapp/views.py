@@ -238,6 +238,18 @@ def DashboardView(request):
 
     return JsonResponse(result)
 
+class GalleryimageListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Galleryimage.objects.all().order_by('-created_at')
+    serializer_class = GalleryImageSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticatedForPostPatchDelete]
+
+class GalleryimageRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Galleryimage.objects.all()
+    serializer_class = GalleryImageSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticatedForPostPatchDelete]
+
 # ==============================================================================================================
 class HairCategoryListCreateAPIView(generics.ListCreateAPIView):
     queryset = HairCategory.objects.all()
