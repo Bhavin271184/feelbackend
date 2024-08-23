@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     # 'cloudinary',
     'rest_framework_simplejwt',
     'corsheaders',
-    # 'storages',
+    'storages',
 
 ]
 
@@ -206,7 +206,7 @@ SIMPLE_JWT = {
 # AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
 # AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME')
 
-# s3 bucket for image storage to aws
+# s3 bucket for image storage to awshuha
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
