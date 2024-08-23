@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
+from pathlib import Path
+import os
 from dotenv import load_dotenv
 load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -144,8 +146,6 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
@@ -196,6 +196,16 @@ SIMPLE_JWT = {
 
 # MEDIA_URL = '/media/'
 # MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+# DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+# AZURE_ACCOUNT_NAME = os.getenv('AZURE_ACCOUNT_NAME')
+# AZURE_CONTAINER = os.getenv('AZURE_CONTAINER')
+# AZURE_ACCOUNT_KEY = os.getenv('AZURE_ACCOUNT_KEY')
+
+CRM_API_KEY = os.getenv('CRM_API_KEY')
+
+STATICFILES_STORAGE = 'storages.backends.azure_storage.AzureStorage'
 # DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
 # AZURE_ACCOUNT_NAME = os.getenv('AZURE_ACCOUNT_NAME')
 # AZURE_CONTAINER = os.getenv('AZURE_CONTAINER')
@@ -218,6 +228,3 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 AWS_S3_OBJECT_PARAMETERS = {
     'ContentType': 'image/webp',
 }
-
-
-CRM_API_KEY = os.getenv('CRM_API_KEY')
