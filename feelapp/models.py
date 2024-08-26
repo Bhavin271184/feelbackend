@@ -12,7 +12,6 @@ from uuid import uuid4
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
-from django.core.files.storage import default_storage
 
 
 # Create your models here.
