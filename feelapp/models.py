@@ -2,7 +2,7 @@ import os
 from uuid import uuid4
 from django.db import models
 from django.utils import timezone
-from django.core.files.storage import default_storage
+# from django.core.files.storage import default_storage
 # from cloudinary.models import CloudinaryField
 from django.urls import reverse
 from django.contrib.postgres.fields import ArrayField
@@ -27,7 +27,7 @@ class CategoryModel(models.Model):
     name = models.CharField(max_length=100, unique=True)
     # slug = models.SlugField()
     priority = models.IntegerField(default=0)
-    image_url = models.ImageField(blank=True, null=True, default='', upload_to=category_image_upload_path, storage=default_storage)
+    image_url = models.ImageField(blank=True, null=True, default='', upload_to=category_image_upload_path)
     created_at = models.DateTimeField(default=timezone.now)
     STATUS_CHOICES = [
         ('active', 'Active'),

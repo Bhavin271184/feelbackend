@@ -13,38 +13,6 @@ class BlogSerializer(serializers.ModelSerializer):
         model = Blog
         fields = '__all__'
 
-    # def validate(self, data):
-    #     """
-    #     Check that the title and slug are unique during PATCH requests.
-    #     """
-    #     request = self.context.get('request')
-    #     if request and request.method == 'PATCH':
-    #         blog_id = self.instance.id
-    #         title = data.get('title')
-    #         slug = data.get('slug')
-
-    #         # Validate title uniqueness if it has changed
-    #         if title and title != self.instance.title:
-    #             if Blog.objects.filter(title=title).exclude(id=blog_id).exists():
-    #                 raise serializers.ValidationError({'title': 'Blog with this title already exists.'})
-
-    #         # Validate slug uniqueness if it has changed
-    #         if slug and slug != self.instance.slug:
-    #             if Blog.objects.filter(slug=slug).exclude(id=blog_id).exists():
-    #                 raise serializers.ValidationError({'slug': 'Blog with this slug already exists.'})
-
-    #     return data
-
-    # def update(self, instance, validated_data):
-    #     """
-    #     Update and return an existing `Blog` instance, given the validated data.
-    #     """
-    #     for attr, value in validated_data.items():
-    #         setattr(instance, attr, value)
-
-    #     instance.save()
-    #     return instance
-
 
 
 class HeroOfferSerializer(serializers.ModelSerializer):
@@ -274,79 +242,6 @@ class ServiceDetailSerializer(serializers.Serializer):
     service_type = serializers.ChoiceField(choices=['unisex', 'massage', 'hair'])
     price = serializers.DecimalField(max_digits=10, decimal_places=2)
     quantity = serializers.IntegerField()
-
-# class BookingSerializer(serializers.Serializer):
-#     is_register = serializers.BooleanField()
-#     mobile_number = serializers.CharField(max_length=15)
-#     email = serializers.EmailField(required=False)
-#     first_name = serializers.CharField(max_length=100, required=False)
-#     last_name = serializers.CharField(max_length=100, required=False)
-#     birth_date = serializers.DateField(required=False)
-#     anniversary_date = serializers.DateField(required=False)
-#     gender = serializers.ChoiceField(choices=[('M', 'Male'), ('F', 'Female')], required=False)
-#     service_ids = serializers.ListField(
-#         child=serializers.IntegerField(),
-#         required=True
-#     )
-#     appointment_date = serializers.DateField(required=True)
-
-#     def validate(self, data):
-#         # Fetch or validate customer based on `is_register`
-#         if data['is_register']:
-#             customer = Customer.objects.filter(mobile_number=data['mobile_number']).first()
-#             if customer:
-#                 data.update({
-#                     'email': customer.email,
-#                     'first_name': customer.first_name,
-#                     'last_name': customer.last_name,
-#                     'birth_date': customer.birth_date,
-#                     'anniversary_date': customer.anniversary_date,
-#                     'gender': customer.gender
-#                 })
-#             else:
-#                 raise serializers.ValidationError("Customer with this mobile number does not exist.")
-#         else:
-#             required_fields = ['email', 'first_name', 'last_name', 'birth_date', 'gender']
-#             for field in required_fields:
-#                 if not data.get(field):
-#                     raise serializers.ValidationError(f"{field} is required when 'is_register' is False.")
-
-#         subtotals = []
-#         total = 0
-#         service_fetching_errors = []
-
-#         for service_id in data['service_servid']:
-#             try:
-#                 # Fetch the service based on ID
-#                 service = Services.objects.get(id=service_id)
-#                 subtotals.append(service.price)
-#                 total += service.price
-#             except Services.DoesNotExist:
-#                 service_fetching_errors.append(f"Service with ID {service_id} does not exist.")
-
-#         if service_fetching_errors:
-#             raise serializers.ValidationError({"service_errors": service_fetching_errors})
-
-#         # Add calculated subtotals and total to the validated data
-#         data['subtotals'] = subtotals
-#         data['total'] = total
-
-#         return data
-
-#     def to_representation(self, instance):
-#         # Modify the representation to include `appointment_date` outside the services array
-#         representation = super().to_representation(instance)
-
-#         # Add the appointment_date to the top level
-#         representation['appointment_date'] = instance['appointment_date']
-        
-#         # Remove appointment_date from each service if present
-#         for service in representation.get('services', []):
-#             service.pop('appointment_date', None)
-        
-#         return representation
-
-
 
 
 class BookingAWTSerializer(serializers.Serializer):

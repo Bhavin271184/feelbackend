@@ -216,9 +216,9 @@ CRM_API_KEY = os.getenv('CRM_API_KEY')
 # AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME')
 
 # s3 bucket for image storage to awshuha
-AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", '****')
-AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "****")
-AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME", 'my-static-files')
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
 AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
 
 # Django Storage Backend
