@@ -1115,6 +1115,17 @@ class ServicesuserListCreateView(generics.ListCreateAPIView):
     serializer_class = ServicesuserSerializer
     permission_classes = [permissions.AllowAny]  
 
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        category_slug = self.request.query_params.get('category_slug')
+        
+        if category_slug:
+            # Filter the services based on the category slug
+            queryset = queryset.filter(categories__slug=category_slug)
+    
+        return queryset
     def perform_create(self, serializer):
         serializer.save()
 # ------------------------------------=====================================================================
