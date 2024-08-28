@@ -6,6 +6,11 @@ class CategoryModelSerializer(serializers.ModelSerializer):
         model = CategoryModel
         fields = '__all__'
 
+class CategoryModelSerializerForService(serializers.ModelSerializer):
+    class Meta:
+        model = CategoryModel
+        fields = ['id', 'name' , 'priority']
+
 
 class BlogSerializer(serializers.ModelSerializer):
 
@@ -129,15 +134,6 @@ class BrandAndProductSerializer(serializers.ModelSerializer):
         
         return instance
 
-# ==============================================================================================================
-
-# class GoogleReviewSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = GoogleReview
-#         fields = '__all__'
-
-# ==============================================================================================================
-
 class SubcategoryModelSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(queryset=CategoryModel.objects.all(), write_only=True)
     category_details = CategoryModelSerializer(source='category', read_only=True)
@@ -161,11 +157,6 @@ class SubcategoryModelSerializerForService(serializers.ModelSerializer):
         model = SubcategoryModel
         fields = ['id', 'name', 'priority',]
 
-
-    def validate_category(self, value):
-        if value.status == 'deactive':
-            raise serializers.ValidationError("Subcategory cannot be created because the associated category is deactive.")
-        return value
 
 
 class ChildCategoryModelSerializer(serializers.ModelSerializer):
@@ -196,11 +187,13 @@ class ServicesSerializer(serializers.ModelSerializer):
     # Include ChildCategoryModelSerializer to show full childcategory details in GET requests
     childcategory_data = serializers.SerializerMethodField()
     subcategory_data = serializers.SerializerMethodField()
+    category_data = serializers.SerializerMethodField()
+
 
 
     class Meta:
         model = Services
-        fields = ['id', 'categories','price','image','description','servid','subcategory', 'childcategory', 'service_name', 'priority', 'subcategory_data','childcategory_data', 'created_at']
+        fields = ['id', 'categories', 'price', 'image', 'description', 'servid', 'subcategory', 'childcategory', 'service_name', 'priority', 'subcategory_data', 'childcategory_data', 'category_data', 'created_at']
 
     def get_childcategory_data(self, obj):
         # You need to define a serializer for ChildCategoryModel if you want to use it
@@ -209,6 +202,10 @@ class ServicesSerializer(serializers.ModelSerializer):
     def get_subcategory_data(self, obj):
         # You need to define a serializer for ChildCategoryModel if you want to use it
         return SubcategoryModelSerializerForService(obj.subcategory).data
+    
+    def get_category_data(self, obj):
+        # You need to define a serializer for ChildCategoryModel if you want to use it
+        return CategoryModelSerializerForService(obj.categories).data
 
     def create(self, validated_data):
         # Perform custom logic here if needed
