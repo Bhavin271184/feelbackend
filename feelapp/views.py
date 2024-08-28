@@ -759,6 +759,11 @@ class SubcategoryModelListCreateView(generics.ListCreateAPIView):
 
         if category_id:
             queryset = queryset.filter(category__id=category_id)
+
+        category_slug = self.request.query_params.get('category_slug')
+        if category_slug:
+            queryset = queryset.filter(category__slug=category_slug)
+
         name = self.request.query_params.get('name')
         if name:
             queryset = queryset.filter(name__icontains=name)
@@ -884,6 +889,7 @@ class SubcategoryModelDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 from rest_framework.exceptions import ValidationError
 
+from rest_framework import generics, permissions  
 
 class ChildCategoryModelListCreateView(generics.ListCreateAPIView):
     serializer_class = ChildCategoryModelSerializer
@@ -896,6 +902,10 @@ class ChildCategoryModelListCreateView(generics.ListCreateAPIView):
         if subcategory_id:
             queryset = queryset.filter(subcategory__id=subcategory_id)
 
+        category_slug = self.request.query_params.get('category_slug')
+        if category_slug:
+            queryset = queryset.filter(category__slug=category_slug)
+        
         start_date_str = self.request.GET.get('start_date')
         end_date_str = self.request.GET.get('end_date')
 
@@ -1087,15 +1097,19 @@ class ServicesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         childcategory = serializer.validated_data.get('childcategory')
 
         if childcategory:
-            # If childcategory is provided, calculate the new priority
             max_priority = Services.objects.filter(childcategory=childcategory).aggregate(Max('priority'))['priority__max'] or 0
             new_priority = max_priority + 1
-            # Save with the calculated priority
             serializer.save(priority=new_priority)
         else:
-            # If childcategory is not provided, save without modifying priority
             serializer.save()
 
+class ServicesuserListCreateView(generics.ListCreateAPIView):
+    queryset = Services.objects.all()
+    serializer_class = ServicesuserSerializer
+    permission_classes = [permissions.AllowAny]  
+
+    def perform_create(self, serializer):
+        serializer.save()
 # ------------------------------------=====================================================================
 from django.conf import settings
 from urllib.parse import urlencode

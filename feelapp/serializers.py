@@ -214,6 +214,31 @@ class ServicesSerializer(serializers.ModelSerializer):
         # Perform custom logic here if needed
         return super().create(validated_data)
 
+class ServicesuserSerializer(serializers.ModelSerializer):
+    categories = serializers.PrimaryKeyRelatedField(queryset=CategoryModel.objects.all(), required=False, allow_null=True)
+    subcategory = serializers.PrimaryKeyRelatedField(queryset=SubcategoryModel.objects.all(), required=False, allow_null=True)
+    childcategory = serializers.PrimaryKeyRelatedField(queryset=ChildCategoryModel.objects.all(), required=False, allow_null=True)
+    
+    class Meta:
+        model = Services
+        fields = [
+            'id', 
+            'categories',  # Only the ID will be returned
+            'subcategory',  # Only the ID will be returned
+            'childcategory',  # Only the ID will be returned
+            'service_name', 
+            'description', 
+            'price', 
+            'image', 
+            'status', 
+            'priority', 
+            'created_at'
+        ]
+
+    def create(self, validated_data):
+        # Perform custom logic here if needed
+        return super().create(validated_data)
+
 # ==============================================================================================================
 
 class CustomerSerializer(serializers.ModelSerializer):
