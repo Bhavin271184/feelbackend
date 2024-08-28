@@ -152,6 +152,22 @@ class SubcategoryModelSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Subcategory cannot be created because the associated category is deactive.")
         return value
 
+
+class SubcategoryModelSerializerForService(serializers.ModelSerializer):
+    # category = serializers.PrimaryKeyRelatedField(queryset=CategoryModel.objects.all(), write_only=True)
+    # category_details = CategoryModelSerializer(source='category', read_only=True)
+
+    class Meta:
+        model = SubcategoryModel
+        fields = ['id', 'name', 'priority',]
+
+
+    def validate_category(self, value):
+        if value.status == 'deactive':
+            raise serializers.ValidationError("Subcategory cannot be created because the associated category is deactive.")
+        return value
+
+
 class ChildCategoryModelSerializer(serializers.ModelSerializer):
     # Use PrimaryKeyRelatedField for category and subcategory to handle IDs in POST/PUT requests
     category = serializers.PrimaryKeyRelatedField(queryset=CategoryModel.objects.all())
@@ -163,6 +179,14 @@ class ChildCategoryModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChildCategoryModel
         fields = ['id', 'category', 'subcategory', 'childid','name', 'priority', 'subcategory_data', 'created_at']
+
+
+class ChildCategoryModelSerializerForService(serializers.ModelSerializer):
+
+    class Meta:
+        model = ChildCategoryModel
+        fields = ['id', 'name', 'priority',]
+
 
 class ServicesSerializer(serializers.ModelSerializer):
     categories = serializers.PrimaryKeyRelatedField(queryset=CategoryModel.objects.all(),required=False, allow_null=True)
@@ -180,11 +204,11 @@ class ServicesSerializer(serializers.ModelSerializer):
 
     def get_childcategory_data(self, obj):
         # You need to define a serializer for ChildCategoryModel if you want to use it
-        return ChildCategoryModelSerializer(obj.childcategory).data
+        return ChildCategoryModelSerializerForService(obj.childcategory).data
 
     def get_subcategory_data(self, obj):
         # You need to define a serializer for ChildCategoryModel if you want to use it
-        return SubcategoryModelSerializer(obj.subcategory).data
+        return SubcategoryModelSerializerForService(obj.subcategory).data
 
     def create(self, validated_data):
         # Perform custom logic here if needed
