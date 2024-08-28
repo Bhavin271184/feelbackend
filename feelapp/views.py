@@ -1025,11 +1025,18 @@ class ChildCategoryModelDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance.delete()
 
 from django.db.models import Max
+from rest_framework.pagination import PageNumberPagination
+
+class ServiceSetPagination(PageNumberPagination):
+    page_size = 10  # Number of items per page
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 class ServicesListCreateView(generics.ListCreateAPIView):
     queryset = Services.objects.all()
     serializer_class = ServicesSerializer
     permission_classes = [IsAuthenticatedForPostPatchDelete]
+    pagination_class = ServiceSetPagination
 
     def get_queryset(self):
         queryset = super().get_queryset()
