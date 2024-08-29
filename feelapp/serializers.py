@@ -30,7 +30,7 @@ class GalleryImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Galleryimage
         fields = ['id', 'name', 'image', 'created_at']
-# ============================================
+
 class HairCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = HairCategory
@@ -107,7 +107,6 @@ class ServiceItemSerializer(serializers.ModelSerializer):
         categories = validated_data.pop('category')  # Extract categories from validated_data
         service_item = ServiceItem.objects.create(categories=categories, **validated_data)
         return service_item
-# ========================================================================================
 
 class MulImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -150,8 +149,6 @@ class SubcategoryModelSerializer(serializers.ModelSerializer):
 
 
 class SubcategoryModelSerializerForService(serializers.ModelSerializer):
-    # category = serializers.PrimaryKeyRelatedField(queryset=CategoryModel.objects.all(), write_only=True)
-    # category_details = CategoryModelSerializer(source='category', read_only=True)
 
     class Meta:
         model = SubcategoryModel
@@ -235,8 +232,6 @@ class ServicesuserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Perform custom logic here if needed
         return super().create(validated_data)
-
-# ==============================================================================================================
 
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:

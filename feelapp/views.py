@@ -10,7 +10,14 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 import requests
-from django.db.models import Q, Max
+from django.db.models import Q, Max, F
+from rest_framework.exceptions import ValidationError
+from rest_framework import generics, permissions
+from rest_framework.pagination import PageNumberPagination
+from urllib.parse import urlencode
+from django.db import transaction
+
+
 
 
 
@@ -32,10 +39,6 @@ class CategoryModelListCreateView(generics.ListCreateAPIView):
         
         start_date_str = self.request.GET.get('start_date')
         end_date_str = self.request.GET.get('end_date')
-        # slug = self.request.GET.get('slug')
-
-        # if slug:
-        #     queryset = queryset.filter(slug=slug)
 
         if start_date_str:
             try:
@@ -65,7 +68,7 @@ class CategoryModelListCreateView(generics.ListCreateAPIView):
             print(f"Filtering up to {end_date}")  # Debug statement
             queryset = queryset.filter(created_at__lte=end_date)
 
-        return queryset #hhh
+        return queryset
 
 
 class CategoryModelRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -141,10 +144,12 @@ class BlogListCreateView(generics.ListCreateAPIView):
 
         return queryset
 
+
 class BlogRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Blog.objects.all()
     serializer_class = BlogSerializer
     permission_classes = [IsAuthenticatedForPostPatchDelete]
+
 
 class HeroOfferListCreateView(generics.ListCreateAPIView):
     queryset = HeroOffer.objects.all()
@@ -156,10 +161,6 @@ class HeroOfferListCreateView(generics.ListCreateAPIView):
         
         start_date_str = self.request.GET.get('start_date')
         end_date_str = self.request.GET.get('end_date')
-        # slug = self.request.GET.get('slug')
-
-        # if slug:
-        #     queryset = queryset.filter(slug=slug)
 
         if start_date_str:
             try:
@@ -193,6 +194,7 @@ class HeroOfferListCreateView(generics.ListCreateAPIView):
         
         return queryset
 
+
 class HeroOfferRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = HeroOffer.objects.all()
     serializer_class = HeroOfferSerializer
@@ -220,6 +222,7 @@ class HeroOfferRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
         return super().partial_update(request, *args, **kwargs)
 
+
 def DashboardView(request):
     result = {}
 
@@ -237,11 +240,13 @@ def DashboardView(request):
 
     return JsonResponse(result)
 
+
 class GalleryimageListCreateAPIView(generics.ListCreateAPIView):
     queryset = Galleryimage.objects.all().order_by('-created_at')
     serializer_class = GalleryImageSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticatedForPostPatchDelete]
+
 
 class GalleryimageRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Galleryimage.objects.all()
@@ -249,7 +254,7 @@ class GalleryimageRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPI
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticatedForPostPatchDelete]
 
-# ==============================================================================================================
+
 class HairCategoryListCreateAPIView(generics.ListCreateAPIView):
     queryset = HairCategory.objects.all()
     serializer_class = HairCategorySerializer
@@ -260,10 +265,6 @@ class HairCategoryListCreateAPIView(generics.ListCreateAPIView):
         
         start_date_str = self.request.GET.get('start_date')
         end_date_str = self.request.GET.get('end_date')
-        # slug = self.request.GET.get('slug')
-
-        # if slug:
-        #     queryset = queryset.filter(slug=slug)
 
         if start_date_str:
             try:
@@ -295,11 +296,13 @@ class HairCategoryListCreateAPIView(generics.ListCreateAPIView):
 
         return queryset
 
+
 class HairCategoryRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = HairCategory.objects.all()
     serializer_class = HairCategorySerializer
     permission_classes = [IsAuthenticatedForPostPatchDelete]
-    
+
+
 class HairServiceListCreateAPIView(generics.ListCreateAPIView):
     queryset = HairService.objects.all()
     serializer_class = HairServiceSerializer
@@ -311,10 +314,6 @@ class HairServiceListCreateAPIView(generics.ListCreateAPIView):
         
         start_date_str = self.request.GET.get('start_date')
         end_date_str = self.request.GET.get('end_date')
-        # slug = self.request.GET.get('slug')
-
-        # if slug:
-        #     queryset = queryset.filter(slug=slug)
 
         if start_date_str:
             try:
@@ -346,11 +345,13 @@ class HairServiceListCreateAPIView(generics.ListCreateAPIView):
 
         return queryset
 
+
 class HairServiceRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = HairService.objects.all()
     serializer_class = HairServiceSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticatedForPostPatchDelete]
+
 
 class MassageCategoryListCreateAPIView(generics.ListCreateAPIView):
     queryset = MassageCategory.objects.all()
@@ -363,10 +364,6 @@ class MassageCategoryListCreateAPIView(generics.ListCreateAPIView):
         
         start_date_str = self.request.GET.get('start_date')
         end_date_str = self.request.GET.get('end_date')
-        # slug = self.request.GET.get('slug')
-
-        # if slug:
-        #     queryset = queryset.filter(slug=slug)
 
         if start_date_str:
             try:
@@ -398,11 +395,13 @@ class MassageCategoryListCreateAPIView(generics.ListCreateAPIView):
 
         return queryset
 
+
 class MassageCategoryRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = MassageCategory.objects.all()
     serializer_class = MassageCategorySerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticatedForPostPatchDelete]
+
 
 class MassageServiceListCreateAPIView(generics.ListCreateAPIView):
     queryset = MassageService.objects.all()
@@ -450,11 +449,13 @@ class MassageServiceListCreateAPIView(generics.ListCreateAPIView):
 
         return queryset
 
+
 class MassageServiceRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = MassageService.objects.all()
     serializer_class = MassageServiceSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticatedForPostPatchDelete]
+
 
 class UnisexCategoryListCreateAPIView(generics.ListCreateAPIView):
     queryset = UnisexCategory.objects.all()
@@ -502,11 +503,13 @@ class UnisexCategoryListCreateAPIView(generics.ListCreateAPIView):
 
         return queryset
 
+
 class UnisexCategoryRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = UnisexCategory.objects.all()
     serializer_class = UnisexCategorySerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticatedForPostPatchDelete]
+
 
 class UnisexServiceListCreateAPIView(generics.ListCreateAPIView):
     queryset = UnisexService.objects.all()
@@ -556,6 +559,7 @@ class UnisexServiceListCreateAPIView(generics.ListCreateAPIView):
             queryset = queryset.filter(created_at__lte=end_date)
 
         return queryset
+
 
 class UnisexServiceRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = UnisexService.objects.all()
@@ -623,8 +627,6 @@ class ServiceItemRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticatedForPostPatchDelete]
 
 
-# ==============================================================================================================
-
 class BrandAndProductListCreate(generics.ListCreateAPIView):
     queryset = BrandAndProduct.objects.all()
     serializer_class = BrandAndProductSerializer
@@ -639,11 +641,6 @@ class BrandAndProductListCreate(generics.ListCreateAPIView):
         
         start_date_str = self.request.GET.get('start_date')
         end_date_str = self.request.GET.get('end_date')
-
-        # slug = self.request.GET.get('slug')
-
-        # if slug:
-        #     queryset = queryset.filter(slug=slug)
 
         if start_date_str:
             try:
@@ -700,53 +697,12 @@ class MulImageListView(generics.ListAPIView):
         return queryset
         # return super().get_queryset()
 
+
 class MulImageView(generics.RetrieveUpdateDestroyAPIView):
     queryset = BrandAndProductMulImage.objects.all()
     serializer_class = MulImageSerializer
     lookup_url_kwarg = 'mul_image_id'
 
-
-# ==============================================================================================================
-
-# from django.conf import settings
-# from rest_framework.views import APIView
-# from rest_framework.response import Response
-# from rest_framework import status
-# import requests
-# from datetime import datetime
-
-# class GoogleReviewsView(APIView):
-#     def get(self, request, format=None):
-#         # Your place ID (you can find this from Google Maps)
-#         place_id = 'YOUR_PLACE_ID'
-
-#         # Fetch reviews
-#         response = requests.get(
-#             f'https://maps.googleapis.com/maps/api/place/details/json?place_id={place_id}&key={settings.GOOGLE_PLACES_API_KEY}'
-#         )
-
-#         if response.status_code == 200:
-#             result = response.json().get('result', {})
-#             reviews_data = result.get('reviews', [])
-#             for review in reviews_data:
-#                 GoogleReview.objects.update_or_create(
-#                     review_id=review['author_url'],
-#                     defaults={
-#                         'reviewer_name': review['author_name'],
-#                         'review_text': review.get('text', ''),
-#                         'rating': int(review['rating']),
-#                         'review_time': datetime.fromtimestamp(review['time']),
-#                     }
-#                 )
-
-#             # Get all reviews from the database
-#             reviews = GoogleReview.objects.all()
-#             serializer = GoogleReviewSerializer(reviews, many=True)
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-#         else:
-#             return Response({'error': 'Error fetching reviews'}, status=response.status_code)
-
-# ==============================================================================================================
 
 class SubcategoryModelListCreateView(generics.ListCreateAPIView):
     queryset = SubcategoryModel.objects.all()
@@ -770,10 +726,6 @@ class SubcategoryModelListCreateView(generics.ListCreateAPIView):
         
         start_date_str = self.request.GET.get('start_date')
         end_date_str = self.request.GET.get('end_date')
-        # slug = self.request.GET.get('slug')
-
-        # if slug:
-        #     queryset = queryset.filter(slug=slug)
 
         if start_date_str:
             try:
@@ -816,6 +768,7 @@ class SubcategoryModelListCreateView(generics.ListCreateAPIView):
         
         # Save the subcategory with the new priority
         serializer.save(priority=new_priority)
+
 
 class SubcategoryModelDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = SubcategoryModel.objects.all()
@@ -887,10 +840,6 @@ class SubcategoryModelDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance.delete()
 
 
-from rest_framework.exceptions import ValidationError
-
-from rest_framework import generics, permissions  
-
 class ChildCategoryModelListCreateView(generics.ListCreateAPIView):
     serializer_class = ChildCategoryModelSerializer
     permission_classes = [IsAuthenticatedForPostPatchDelete]
@@ -950,7 +899,8 @@ class ChildCategoryModelListCreateView(generics.ListCreateAPIView):
         new_priority = max_priority + 1
         
         serializer.save(priority=new_priority)
-        
+
+
 class ChildCategoryModelDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = ChildCategoryModel.objects.all()
     serializer_class = ChildCategoryModelSerializer
@@ -961,10 +911,6 @@ class ChildCategoryModelDetailView(generics.RetrieveUpdateDestroyAPIView):
         
         start_date_str = self.request.GET.get('start_date')
         end_date_str = self.request.GET.get('end_date')
-        # slug = self.request.GET.get('slug')
-
-        # if slug:
-        #     queryset = queryset.filter(slug=slug)
 
         if start_date_str:
             try:
@@ -1024,13 +970,12 @@ class ChildCategoryModelDetailView(generics.RetrieveUpdateDestroyAPIView):
     def perform_destroy(self, instance):
         instance.delete()
 
-from django.db.models import Max
-from rest_framework.pagination import PageNumberPagination
 
 class ServiceSetPagination(PageNumberPagination):
     page_size = 20  # Number of items per page
     page_size_query_param = 'page_size'
     max_page_size = 100
+
 
 class ServicesListCreateView(generics.ListCreateAPIView):
     queryset = Services.objects.all()
@@ -1110,6 +1055,7 @@ class ServicesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         else:
             serializer.save()
 
+
 class ServicesuserListCreateView(generics.ListCreateAPIView):
     queryset = Services.objects.all()
     serializer_class = ServicesuserSerializer
@@ -1117,115 +1063,8 @@ class ServicesuserListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save()
-# ------------------------------------=====================================================================
-from django.conf import settings
-from urllib.parse import urlencode
-
-# class BookingView(generics.ListCreateAPIView):
-#     authentication_classes = []
-#     permission_classes = [AllowAny]
-#     serializer_class = BookingSerializer
-
-#     def post(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data)
-#         if serializer.is_valid():
-#             # Handle customer creation or update
-#             if serializer.validated_data['is_register']:
-#                 try:
-#                     customer = Customer.objects.get(mobile_number=serializer.validated_data['mobile_number'])
-#                 except Customer.DoesNotExist:
-#                     return Response({'error': 'Customer with this mobile number does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
-#             else:
-#                 customer_data = {
-#                     'mobile_number': serializer.validated_data['mobile_number'],
-#                     'email': serializer.validated_data['email'],
-#                     'first_name': serializer.validated_data['first_name'],
-#                     'last_name': serializer.validated_data['last_name'],
-#                     'birth_date': serializer.validated_data['birth_date'],
-#                     'anniversary_date': serializer.validated_data.get('anniversary_date', None),
-#                     'gender': serializer.validated_data['gender'],
-#                 }
-#                 customer, created = Customer.objects.update_or_create(
-#                     mobile_number=serializer.validated_data['mobile_number'],
-#                     defaults=customer_data
-#                 )
-
-#             # Fetch service details and prepare the service data
-#             total = 0
-#             service_ids = serializer.validated_data['service_ids']
-#             service_fetching_errors = []
-
-#             services = []
-#             for service_id in service_ids:
-#                 try:
-#                     service = Services.objects.get(id=service_id)
-#                     services.append({
-#                         'service_id': service_id,
-#                         'service_name': service.service_name,
-#                         'price': float(service.price)
-#                     })
-#                     total += service.price
-#                 except Services.DoesNotExist:
-#                     service_fetching_errors.append(f"Service with ID {service_id} does not exist.")
-
-#             if service_fetching_errors:
-#                 return Response({'service_errors': service_fetching_errors}, status=status.HTTP_400_BAD_REQUEST)
-
-#             # Prepare the CRM API parameters
-#             param_data = {
-#                 "clientInDate": serializer.validated_data['appointment_date'].strftime("%d/%m/%Y %H:%M"),
-#                 "waitCode": "S",
-#                 "waitTimeCode": "S",
-#                 "comments": "",
-#                 "bookedDate": serializer.validated_data['appointment_date'].strftime("%d/%m/%Y"),
-#                 "expectedStartTime": "1530",  # Placeholder value
-#                 "expectedEndTime": "1530",  # Placeholder value
-#                 "clientId": serializer.validated_data['mobile_number'],
-#                 "serviceId1": "0",  # Placeholder value
-#                 "employeeId1": "0"  # Placeholder value
-#             }
-
-#             # Encode the parameters into a URL-encoded string
-#             encoded_params = urlencode({"Param": str(param_data).replace("'", '"')})
-
-#             # Prepare the full CRM API URL
-#             crm_url = f"http://app.salonspa.in/book/bridge.ashx?key=gangatsw&cmd=AWT&{encoded_params}"
-
-#             # Send data to the CRM API using GET request
-#             try:
-#                 crm_response = requests.get(crm_url)
-#                 crm_response.raise_for_status()  # Raise an exception for HTTP errors
-#             except requests.RequestException as e:
-#                 return Response({'error': f'Failed to send data to CRM: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-#             # Prepare and return the response data
-#             response_data = {
-#                 'customer': {
-#                     'id': customer.id,
-#                     'is_register': serializer.validated_data['is_register'],
-#                     'mobile_number': customer.mobile_number,
-#                     'email': customer.email,
-#                     'first_name': customer.first_name,
-#                     'last_name': customer.last_name,
-#                     'birth_date': customer.birth_date.strftime("%Y-%m-%d"),
-#                     'anniversary_date': customer.anniversary_date.strftime("%Y-%m-%d") if customer.anniversary_date else None,
-#                     'gender': customer.gender
-#                 },
-#                 'appointment_date': serializer.validated_data['appointment_date'].strftime("%Y-%m-%d"),
-#                 'services': services,
-#                 'total': float(total),  # Convert Decimal to float
-#                 'crm_url': crm_url
-#             }
-
-#             return Response(response_data, status=status.HTTP_201_CREATED)
-
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-from rest_framework import generics, status
-from rest_framework.response import Response
-from django.db import transaction
-from django.db.models import F, Max
 class BaseNormalPriorityUpdateView(generics.UpdateAPIView):
     field_name = 'priority'  # Default field name for priority
     permission_classes = [IsAuthenticatedForPostPatchDelete]
@@ -1288,8 +1127,6 @@ class ServicesPriorityUpdateView(BaseNormalPriorityUpdateView):
     queryset = Services.objects.all()
     serializer_class = ServicesSerializer
     field_name = 'priority' 
-    # permission_classes = [IsAuthenticatedForPostPatchDelete]
-
 
 
 class HeroOfferPriorityUpdateView(BaseNormalPriorityUpdateView):
@@ -1297,149 +1134,6 @@ class HeroOfferPriorityUpdateView(BaseNormalPriorityUpdateView):
     serializer_class = HeroOfferSerializer
     field_name = 'priority'  
 
-
-
-
-import json
-# # AWT working  code is on the line  1330 to 1428 
-# class BookingView(generics.ListCreateAPIView):
-#     authentication_classes = []
-#     permission_classes = [AllowAny]
-#     serializer_class = BookingSerializer
-
-#     def post(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data)
-#         if serializer.is_valid():
-#             mobile_number = serializer.validated_data['mobile_number']
-#             is_register = serializer.validated_data['is_register']
-#             appointment_date = serializer.validated_data['appointment_date']
-#             service_ids = serializer.validated_data['service_ids']
-#             total = 0
-#             service_fetching_errors = []
-
-#             # Handle customer creation or update
-#             if is_register:
-#                 try:
-#                     customer = Customer.objects.get(mobile_number=mobile_number)
-#                 except Customer.DoesNotExist:
-#                     return Response({'error': 'Customer with this mobile number does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
-#             else:
-#                 customer_data = {
-#                     'mobile_number': mobile_number,
-#                     'email': serializer.validated_data['email'],
-#                     'first_name': serializer.validated_data['first_name'],
-#                     'last_name': serializer.validated_data['last_name'],
-#                     'birth_date': serializer.validated_data['birth_date'],
-#                     'anniversary_date': serializer.validated_data.get('anniversary_date', None),
-#                     'gender': serializer.validated_data['gender'],
-#                 }
-#                 customer, created = Customer.objects.update_or_create(
-#                     mobile_number=mobile_number,
-#                     defaults=customer_data
-#                 )
-
-#             # Fetch service details and calculate total
-#             services = []
-#             for service_servid in service_ids:
-#                 try:
-#                     service = Services.objects.get(servid=service_servid)
-#                     services.append({
-#                         'service_id': service_servid,
-#                         'service_name': service.service_name,
-#                         'price': float(service.price)
-#                     })
-#                     total += service.price
-#                 except Services.DoesNotExist:
-#                     service_fetching_errors.append(f"Service with servid {service_servid} does not exist.")
-
-#             if service_fetching_errors:
-#                 return Response({'service_errors': service_fetching_errors}, status=status.HTTP_400_BAD_REQUEST)
-
-#             # Prepare CRM API parameters
-#             param_data = {
-#                 "clientInDate": appointment_date.strftime("%d/%m/%Y %H:%M"),
-#                 "waitCode": "S",
-#                 "waitTimeCode": "S",
-#                 "comments": "",
-#                 "bookedDate": appointment_date.strftime("%d/%m/%Y"),
-#                 "expectedStartTime": "1530",  # Placeholder value
-#                 "expectedEndTime": "1530",  # Placeholder value
-#                 "clientId": mobile_number,
-#                 "serviceId1": "0",  # Placeholder value
-#                 "employeeId1": "0"  # Placeholder value
-#             }
-
-#             encoded_wait_list_params = urlencode({"Param": json.dumps(param_data)})
-#             wait_list_url = f"http://app.salonspa.in/book/bridge.ashx?key=gangatsw&cmd=AWT&{encoded_wait_list_params}"
-
-#             client_param_data = {
-#                 "clientId": mobile_number,
-#                 "firstName": serializer.validated_data['first_name'],
-#                 "lastName": serializer.validated_data['last_name'],
-#                 "email": serializer.validated_data['email'],
-#                 "mobileNumber": mobile_number,
-#                 "gender": serializer.validated_data['gender'],
-#                 "dateOfAnniversary": serializer.validated_data.get('anniversary_date', "").strftime("%d/%m/%Y") if serializer.validated_data.get('anniversary_date') else "",
-#                 "dateOfBirth": serializer.validated_data['birth_date'].strftime("%d/%m/%Y"),
-#                 "category": "",  # Optional
-#                 "referralType": ""  # Optional
-#             }
-
-#             encoded_client_params = urlencode({"Param": json.dumps(client_param_data)})
-#             create_client_url = f"http://app.salonspa.in/book/bridge.ashx?key=gangatsw&cmd=AC&{encoded_client_params}"
-
-#             # Check if the client exists in CRM and handle accordingly
-#             try:
-#                 # First, try adding to the waiting list
-#                 crm_response = requests.get(wait_list_url)
-#                 crm_response.raise_for_status()
-#                 crm_response_data = crm_response.json()
-
-#                 if crm_response_data.get("errorCode") == "1003":
-#                     # Client not found, create new client
-#                     crm_create_client_response = requests.get(create_client_url)
-#                     crm_create_client_response.raise_for_status()
-#                     create_client_response_data = crm_create_client_response.json()
-
-#                     if create_client_response_data.get("errorCode") == "0":  # Assuming 0 is success
-#                         # Retry adding to waiting list
-#                         crm_response = requests.get(wait_list_url)
-#                         crm_response.raise_for_status()
-#                         crm_response_data = crm_response.json()
-#                     else:
-#                         return Response({
-#                             'error': f'Failed to create new client in CRM. Response: {create_client_response_data}'
-#                         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-#                 # Prepare and return the response data
-#                 response_data = {
-#                     'customer': {
-#                         'id': customer.id,
-#                         'is_register': is_register,
-#                         'mobile_number': customer.mobile_number,
-#                         'email': customer.email,
-#                         'first_name': customer.first_name,
-#                         'last_name': customer.last_name,
-#                         'birth_date': customer.birth_date.strftime("%Y-%m-%d"),
-#                         'anniversary_date': customer.anniversary_date.strftime("%Y-%m-%d") if customer.anniversary_date else None,
-#                         'gender': customer.gender
-#                     },
-#                     'appointment_date': appointment_date.strftime("%Y-%m-%d"),
-#                     'services': services,
-#                     'total': float(total),  # Convert Decimal to float
-#                     'crm_wait_list_url': wait_list_url,
-#                     'crm_create_client_url': create_client_url,
-#                     'crm_response': crm_response_data
-#                 }
-
-#                 return Response(response_data, status=status.HTTP_201_CREATED)
-
-#             except requests.RequestException as e:
-#                 return Response({
-#                     'error': f'Failed to communicate with CRM: {str(e)}'
-#                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class BookingAWTView(generics.ListCreateAPIView):
     authentication_classes = []
@@ -1545,10 +1239,6 @@ class BookingAWTView(generics.ListCreateAPIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-from urllib.parse import urlencode
-from rest_framework import status
-from rest_framework.response import Response
-import requests
 
 class BookingACView(generics.ListCreateAPIView):
     authentication_classes = []
@@ -1621,128 +1311,3 @@ class BookingACView(generics.ListCreateAPIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# =======================================================================================================
-
-
-
-
-# # def send_booking_request(client_data):
-# #     url = 'https://app.salonspa.in/book/bridge.ashx'
-# #     params = {
-# #         'key': 'gangatsw',
-# #         'cmd': 'AWT',
-# #         'Param': {
-# #             "clientInDate": client_data.get("clientInDate", ""),
-# #             "waitCode": client_data.get("waitCode", "S"),
-# #             "waitTimeCode": client_data.get("waitTimeCode", "S"),
-# #             "comments": client_data.get("comments", ""),
-# #             "bookedDate": client_data.get("bookedDate", ""),
-# #             "expectedStartTime": client_data.get("expectedStartTime", ""),
-# #             "expectedEndTime": client_data.get("expectedEndTime", ""),
-# #             "clientId": client_data.get("clientId", ""),
-# #             "serviceId1": client_data.get("serviceId1", "0"),
-# #             "employeeId1": client_data.get("employeeId1", "0")
-# #         }
-# #     }
-
-# #     response = requests.post(url, params=params)
-    
-# #     if response.status_code == 200:
-# #         return response.json()
-# #     else:
-# #         response.raise_for_status()
-
-
-# # class BookingRequestAPIView(generics.ListCreateAPIView):
-# #     permission_classes = [AllowAny]
-
-# #     # def get_queryset(self):
-# #     #     return []
-# #     def create(self, request, *args, **kwargs):
-# #         try:
-# #             client_data = request.data
-# #             result = send_booking_request(client_data)
-# #             print(result)
-# #             return Response(result, status=status.HTTP_200_OK)
-# #         except requests.HTTPError as e:
-# #             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-# def send_booking_request(client_data):
-#     url = 'https://app.salonspa.in/book/bridge.ashx'
-#     params = {
-#         'key': 'gangatsw',
-#         'cmd': 'AWT',
-#         'Param': {
-#             "clientInDate": client_data.get("clientInDate", ""),
-#             "waitCode": client_data.get("waitCode", "S"),
-#             "waitTimeCode": client_data.get("waitTimeCode", "S"),
-#             "comments": client_data.get("comments", ""),
-#             "bookedDate": client_data.get("bookedDate", ""),
-#             "expectedStartTime": client_data.get("expectedStartTime", ""),
-#             "expectedEndTime": client_data.get("expectedEndTime", ""),
-#             "clientId": client_data.get("clientId", ""),
-#             "serviceId1": client_data.get("serviceId1", "0"),
-#             "employeeId1": client_data.get("employeeId1", "0")
-#         }
-#     }
-
-#     response = requests.post(url, params=params)
-    
-#     if response.status_code == 200:
-#         return response.json()
-#     else:
-#         response.raise_for_status()
-
-# class BookingRequestAPIView(generics.CreateAPIView):
-#     """
-#     A view that provides the create action for booking requests.
-#     """
-    
-#     def create(self, request, *args, **kwargs):
-#         try:
-#             client_data = request.data
-#             result = send_booking_request(client_data)
-#             return Response(result, status=status.HTTP_200_OK)
-#         except requests.HTTPError as e:
-#             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
-# class BookingView1(generics.GenericAPIView):
-#     authentication_classes = []  
-#     permission_classes = [AllowAny] 
-    
-#     def post(self, request, *args, **kwargs):
-#         # Extract the data from the request
-#         client_data = request.data
-
-#         # Construct the full URL with the key and cmd parameters
-#         url = 'https://app.salonspa.in/book/bridge.ashx'
-#         key = 'gangatsw'  # Replace with your actual key
-#         cmd = 'AWT'  # Command for adding a wait list
-
-#         # Prepare the JSON payload for the "Param" parameter
-#         param_data = {
-#             "clientInDate": client_data.get("clientInDate", "09/08/2024 12:15"),
-#             "waitCode": client_data.get("waitCode", "S"),
-#             "waitTimeCode": client_data.get("waitTimeCode", "S"),
-#             "comments": client_data.get("comments", ""),
-#             "bookedDate": client_data.get("bookedDate", "09/08/2024"),
-#             "expectedStartTime": client_data.get("expectedStartTime", "1530"),
-#             "expectedEndTime": client_data.get("expectedEndTime", "1530"),
-#             "clientId": client_data.get("clientId", "8758780504"),
-#             "serviceId1": client_data.get("serviceId1", "0"),
-#             "employeeId1": client_data.get("employeeId1", "0")
-#         }
-
-#         # Send the POST request to the external API
-#         response = requests.post(
-#             url,
-#             params={'key': key, 'cmd': cmd},  # Key and command as URL parameters
-#             json={'Param': param_data}  # JSON payload for the Param parameter
-#         )
-
-#         # Check the response status
-#         if response.status_code == 200:
-#             return Response(response.json(), status=status.HTTP_200_OK)
-#         else:
-#             return Response({'error': response.text}, status=response.status_code)

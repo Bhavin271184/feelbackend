@@ -59,7 +59,6 @@ urlpatterns = [
     path('bookingawt/', BookingAWTView.as_view(), name='booking'),
     path('bookingac/', BookingACView.as_view(), name='booking'),
 
-
     path('services/<int:pk>/update-priority/', ServicesPriorityUpdateView.as_view(), name='services-update-priority'),
     path('hero-offers/<int:pk>/update-priority/', HeroOfferPriorityUpdateView.as_view(), name='hero-offer-update-priority'),
 

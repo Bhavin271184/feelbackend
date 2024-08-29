@@ -107,7 +107,6 @@ class Galleryimage(models.Model):
     image = models.ImageField(upload_to=gallery_image)
     created_at = models.DateTimeField(default=timezone.now)
 
-# ===================================================================
 
 class HairCategory(models.Model):
     name = models.CharField(max_length=255)
@@ -232,8 +231,6 @@ class ServiceItem(models.Model):
         return self.title or 'No Title'
 
 
-# ===============================================================================
-
 
 def brand_mul_image_upload_path(instance, filename):
     ext = filename.split('.')[-1]
@@ -258,21 +255,6 @@ class BrandAndProductMulImage(models.Model):
     image = models.ImageField(upload_to=brand_mul_image_upload_path, default="", null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 
-# ==============================================================================================================
-
-# class GoogleReview(models.Model):
-#     review_id = models.CharField(max_length=255, unique=True)
-#     reviewer_name = models.CharField(max_length=255)
-#     review_text = models.TextField()
-#     rating = models.IntegerField()
-#     review_time = models.DateTimeField()
-
-#     def __str__(self):
-#         return self.reviewer_name
-
-
-# ==============================================================================================================
-
 
 class SubcategoryModel(models.Model):
     subid=models.IntegerField(default=0)
@@ -295,15 +277,6 @@ class ChildCategoryModel(models.Model):
 
     def __str__(self):
         return self.name
-
-
-
-# def default_service_time():
-#     return {
-#         "hours": 0,
-#         "minutes": 0,
-#         "seatings": 0,
-#     }
 
 def service_image(instance, filename):
     ext = filename.split('.')[-1]
@@ -332,10 +305,6 @@ class Services(models.Model):
     )
     priority = models.IntegerField(default=0)
     created_at = models.DateTimeField(default=timezone.now)
-
-
-# ==============================================================================================================
-
 
 
 class ProductService(models.Model):
