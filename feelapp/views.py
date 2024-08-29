@@ -1044,6 +1044,7 @@ class ServicesListCreateView(generics.ListCreateAPIView):
         start_date_str = self.request.GET.get('start_date')
         end_date_str = self.request.GET.get('end_date')
         slug = self.request.GET.get('slug')  # Get the slug from the request
+        search_query = self.request.GET.get('search')
 
         if slug:
             # Adjust this filter to correctly reflect your model relationships
@@ -1052,7 +1053,10 @@ class ServicesListCreateView(generics.ListCreateAPIView):
                 Q(subcategory__category__slug=slug) |
                 Q(categories__slug=slug)
             )
-        # Initialize start_date and end_date to None
+
+        if search_query:
+            queryset = queryset.filter(Q(service_name__icontains=search_query))
+
         start_date = None
         end_date = None
 
@@ -1079,7 +1083,7 @@ class ServicesListCreateView(generics.ListCreateAPIView):
 
         queryset = queryset.order_by('priority')
 
-        return queryset
+        return queryset.order_by('priority')
 
     def perform_create(self, serializer):
         childcategory = serializer.validated_data.get('childcategory')
@@ -1094,6 +1098,12 @@ class ServicesListCreateView(generics.ListCreateAPIView):
             # If childcategory is not provided, save without modifying priority
             serializer.save()
 
+class AdminServiceSearch(generics.ListAPIView):
+    search_fields = ['service_name']
+    queryset = Services.objects.all()
+    serializer_class = ServicesSerializer
+    permission_classes = [IsAuthenticatedForPostPatchDelete]
+    pagination_class = ServiceSetPagination
 
 class ServicesRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Services.objects.all()
@@ -1125,7 +1135,8 @@ class ServicesuserListCreateView(generics.ListCreateAPIView):
             # Filter the services based on the category slug
             queryset = queryset.filter(categories__slug=category_slug)
     
-        return queryset
+        return queryset.order_by('priority')
+
     def perform_create(self, serializer):
         serializer.save()
 # ------------------------------------=====================================================================
@@ -1452,6 +1463,23 @@ import json
 
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+def add_30_minutes(time_str):
+    if len(time_str) != 4:
+        raise ValueError('Time must be in HHMM format')
+
+    hours = int(time_str[:2])
+    minutes = int(time_str[2:])
+
+    minutes += 30
+
+    if minutes >= 60:
+        minutes -= 60
+        hours += 1
+
+    if hours >= 24:
+        hours = 0
+
+    return f"{hours:02d}{minutes:02d}"
 class BookingAWTView(generics.ListCreateAPIView):
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -1500,6 +1528,9 @@ class BookingAWTView(generics.ListCreateAPIView):
 
             if service_fetching_errors:
                 return Response({'service_errors': service_fetching_errors}, status=status.HTTP_400_BAD_REQUEST)
+            
+            expected_start_time = serializer.validated_data.get('expectedStartTime', "")
+            expected_end_time = add_30_minutes(expected_start_time)
 
             # Prepare the CRM API parameters with transformed service IDs
             param_data = {
@@ -1508,12 +1539,12 @@ class BookingAWTView(generics.ListCreateAPIView):
                 "waitTimeCode": "S",
                 "comments": "",
                 "bookedDate": serializer.validated_data['appointment_date'].strftime("%d/%m/%Y"),
-                # "expectedStartTime": serializer.validated_data.get('expectedStartTime', ""),
-                "expectedEndTime": serializer.validated_data.get('expectedEndTime', ""),
+                "expectedStartTime": expected_start_time,
+                "expectedEndTime": expected_end_time,
                 "clientId": serializer.validated_data['mobile_number'],
                 "employeeId1": "0"
             }
-
+            print(param_data)
             # Dynamically assign service IDs to the param_data
             for i, service_id in enumerate(service_ids, start=1):
                 param_data[f"serviceId{i}"] = str(service_id)
@@ -1545,7 +1576,7 @@ class BookingAWTView(generics.ListCreateAPIView):
                     'gender': customer.gender
                 },
                 'appointment_date': serializer.validated_data['appointment_date'].strftime("%Y-%m-%d"),
-                # 'expectedStartTime': serializer.validated_data.get('expectedStartTime', ''),
+                'expectedStartTime': serializer.validated_data.get('expectedStartTime', ''),
                 'expectedEndTime': serializer.validated_data.get('expectedEndTime', ''),
                 'services': services,
                 'total': float(total),  # Convert Decimal to float

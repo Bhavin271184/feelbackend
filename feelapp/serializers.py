@@ -211,6 +211,12 @@ class ServicesSerializer(serializers.ModelSerializer):
         # Perform custom logic here if needed
         return super().create(validated_data)
 
+class ServiceSearchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Services
+        fields= ['id', 'categories', 'price', 'image', 'description', 'servid','service_name', 'priority','created_at']
+
+
 class ServicesuserSerializer(serializers.ModelSerializer):
     categories = serializers.PrimaryKeyRelatedField(queryset=CategoryModel.objects.all(), required=False, allow_null=True)
     subcategory = serializers.PrimaryKeyRelatedField(queryset=SubcategoryModel.objects.all(), required=False, allow_null=True)
