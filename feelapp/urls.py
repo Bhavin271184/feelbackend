@@ -55,6 +55,8 @@ urlpatterns = [
     path('services/<int:pk>/', ServicesRetrieveUpdateDestroyView.as_view(), name='services-detail'),
 
     path('servicesuser/', ServicesuserListCreateView.as_view(), name='services-list-create'),
+    path('search-service/', AdminServiceSearch.as_view(), name='admin-service-search'),
+
 
     path('bookingawt/', BookingAWTView.as_view(), name='booking'),
     path('bookingac/', BookingACView.as_view(), name='booking'),
