@@ -224,16 +224,50 @@ class HeroOfferRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 def DashboardView(request):
     result = {}
 
+    # Extract start_date and end_date from the request
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            start_date = timezone.make_aware(datetime.combine(start_date, time.min), timezone.get_current_timezone())  # Set time to midnight
+        except ValueError:
+            start_date = None
+    else:
+        start_date = None
+
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            end_date = timezone.make_aware(datetime.combine(end_date, time.max), timezone.get_current_timezone())  # Set time to end of the day
+        except ValueError:
+            end_date = None
+    else:
+        end_date = None
+
     models_to_count = [
         (CategoryModel, 'Total Category'),
         (Services, 'Total Services'),
         (Blog, 'Total Blog'),
         (HeroOffer, 'Total HeroOffer'),
-        
+        (BrandAndProduct, 'Total Product'),
+        (ServiceItem, 'Total Service Page'),
+        (SubcategoryModel, 'Total Subcategory'),
+        (ChildCategoryModel, 'Total ChildCategory'),
     ]
 
     for model, custom_name in models_to_count:
-        count = model.objects.count()
+        queryset = model.objects.all()
+        
+        if start_date and end_date:
+            queryset = queryset.filter(created_at__range=(start_date, end_date))
+        elif start_date:
+            queryset = queryset.filter(created_at__gte=start_date)
+        elif end_date:
+            queryset = queryset.filter(created_at__lte=end_date)
+
+        count = queryset.count()
         result[custom_name] = count
 
     return JsonResponse(result)
