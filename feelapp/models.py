@@ -315,7 +315,7 @@ class Services(models.Model):
     categories = models.ForeignKey(CategoryModel, on_delete=models.CASCADE,null=True,blank=True)
     subcategory = models.ForeignKey(SubcategoryModel, on_delete=models.CASCADE,null=True,blank=True)
     childcategory = models.ForeignKey(ChildCategoryModel, on_delete=models.CASCADE,null=True,blank=True)  # No default here
-    service_name = models.CharField(max_length=255, unique=True)
+    service_name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     price = models.FloatField()
     image = models.ImageField(upload_to='services/', blank=True, null=True)
@@ -333,7 +333,8 @@ class Services(models.Model):
     priority = models.IntegerField(default=0)
     created_at = models.DateTimeField(default=timezone.now)
 
-
+    class Meta:
+        unique_together = ('categories', 'subcategory', 'childcategory', 'service_name')
 # ==============================================================================================================
 
 
