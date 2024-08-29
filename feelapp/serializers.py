@@ -229,7 +229,8 @@ class ServicesuserSerializer(serializers.ModelSerializer):
             'image', 
             'status', 
             'priority', 
-            'created_at'
+            'created_at',
+            'servid', 
         ]
 
     def create(self, validated_data):
