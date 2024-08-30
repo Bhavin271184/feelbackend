@@ -401,3 +401,8 @@ class BookingACSerializer(serializers.Serializer):
             "category": instance.get('category', "Regular"),  # Default value
             "referral_type": instance.get('referral_type', "Friend")  # Default value
         }
+
+class ContactUsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactUs
+        fields = ['id', 'name', 'email', 'message']

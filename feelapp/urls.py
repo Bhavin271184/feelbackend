@@ -65,4 +65,6 @@ urlpatterns = [
     path('services/<int:pk>/update-priority/', ServicesPriorityUpdateView.as_view(), name='services-update-priority'),
     path('hero-offers/<int:pk>/update-priority/', HeroOfferPriorityUpdateView.as_view(), name='hero-offer-update-priority'),
 
+    path('contact-us/', ContactUsListCreateView.as_view(), name='contact_us_list_create'),
+
 ]

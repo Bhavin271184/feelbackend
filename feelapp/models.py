@@ -365,3 +365,9 @@ class Customer(models.Model):
         ('F', 'Female')
     ]
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
+
+
+class ContactUs(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    message = models.TextField()

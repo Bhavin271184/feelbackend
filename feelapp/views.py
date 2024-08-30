@@ -1823,3 +1823,11 @@ class BookingACView(generics.ListCreateAPIView):
 #             return Response(response.json(), status=status.HTTP_200_OK)
 #         else:
 #             return Response({'error': response.text}, status=response.status_code)
+
+
+
+class ContactUsListCreateView(generics.ListCreateAPIView):
+    queryset = ContactUs.objects.all()
+    serializer_class = ContactUsSerializer
+    permission_classes = [AllowAny]
+
