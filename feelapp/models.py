@@ -2,19 +2,11 @@ import os
 from uuid import uuid4
 from django.db import models
 from django.utils import timezone
-# from django.core.files.storage import default_storage
-# from cloudinary.models import CloudinaryField
 from django.urls import reverse
 from django.contrib.postgres.fields import ArrayField
 from django.db.models import UniqueConstraint
-import os
-from uuid import uuid4
-from django.db import models
-from django.utils import timezone
 from django.utils.text import slugify
 
-
-# Create your models here.
 
 def category_image_upload_path(instance, filename):
     ext = filename.split('.')[-1]
@@ -25,7 +17,6 @@ def category_image_upload_path(instance, filename):
 class CategoryModel(models.Model):
     catid=models.IntegerField(default=0)
     name = models.CharField(max_length=100, unique=True)
-    # slug = models.SlugField()
     priority = models.IntegerField(default=0)
     image_url = models.ImageField(blank=True, null=True, default='', upload_to=category_image_upload_path)
     created_at = models.DateTimeField(default=timezone.now)
@@ -107,7 +98,6 @@ class Galleryimage(models.Model):
     image = models.ImageField(upload_to=gallery_image)
     created_at = models.DateTimeField(default=timezone.now)
 
-# ===================================================================
 
 class HairCategory(models.Model):
     name = models.CharField(max_length=255)
@@ -232,8 +222,6 @@ class ServiceItem(models.Model):
         return self.title or 'No Title'
 
 
-# ===============================================================================
-
 
 def brand_mul_image_upload_path(instance, filename):
     ext = filename.split('.')[-1]
@@ -258,21 +246,6 @@ class BrandAndProductMulImage(models.Model):
     image = models.ImageField(upload_to=brand_mul_image_upload_path, default="", null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 
-# ==============================================================================================================
-
-# class GoogleReview(models.Model):
-#     review_id = models.CharField(max_length=255, unique=True)
-#     reviewer_name = models.CharField(max_length=255)
-#     review_text = models.TextField()
-#     rating = models.IntegerField()
-#     review_time = models.DateTimeField()
-
-#     def __str__(self):
-#         return self.reviewer_name
-
-
-# ==============================================================================================================
-
 
 class SubcategoryModel(models.Model):
     subid=models.IntegerField(default=0)
@@ -296,14 +269,6 @@ class ChildCategoryModel(models.Model):
     def __str__(self):
         return self.name
 
-
-
-# def default_service_time():
-#     return {
-#         "hours": 0,
-#         "minutes": 0,
-#         "seatings": 0,
-#     }
 
 def service_image(instance, filename):
     ext = filename.split('.')[-1]
@@ -335,8 +300,6 @@ class Services(models.Model):
 
     class Meta:
         unique_together = ('categories', 'subcategory', 'childcategory', 'service_name')
-# ==============================================================================================================
-
 
 
 class ProductService(models.Model):
