@@ -73,7 +73,7 @@ class CategoryModelListCreateView(generics.ListCreateAPIView):
             print(f"Filtering up to {end_date}")  # Debug statement
             queryset = queryset.filter(created_at__lte=end_date)
 
-        return queryset #hhh
+        return queryset
 
 
 class CategoryModelRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):

@@ -257,6 +257,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'storages',
     'feelapp',
+    'sslserver',
 ]
 
 MIDDLEWARE = [
