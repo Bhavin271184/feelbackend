@@ -64,14 +64,13 @@ class CategoryModelListCreateView(generics.ListCreateAPIView):
             end_date = None
 
         if start_date and end_date:
-            print(f"Filtering from {start_date} to {end_date}")  # Debug statement
             queryset = queryset.filter(created_at__range=(start_date, end_date))
         elif start_date:
-            print(f"Filtering from {start_date} onwards")  # Debug statement
             queryset = queryset.filter(created_at__gte=start_date)
         elif end_date:
-            print(f"Filtering up to {end_date}")  # Debug statement
             queryset = queryset.filter(created_at__lte=end_date)
+
+        queryset = queryset.order_by('priority')
 
         return queryset
 
@@ -1359,8 +1358,6 @@ class BookingACView(generics.ListCreateAPIView):
                 "email": validated_data.get('email', ""),
                 "mobileNumber": validated_data['mobile_number'],
                 "gender": validated_data.get('gender', ""),
-                # "dateOfAnniversary": validated_data.get('anniversary_date').strftime("%d/%m/%Y 00:00") if validated_data.get('anniversary_date') else "",
-                # "dateOfBirth": validated_data.get('birth_date').strftime("%d/%m/%Y 00:00") if validated_data.get('birth_date') else "",
                 "category": validated_data.get('category', "Regular"),
                 "referralType": validated_data.get('referral_type', "Friend")
             }
@@ -1384,13 +1381,10 @@ class BookingACView(generics.ListCreateAPIView):
                     'email': customer.email,
                     'first_name': customer.first_name,
                     'last_name': customer.last_name,
-                    # 'birth_date': customer.birth_date.strftime("%d/%m/%Y 00:00") if customer.birth_date else None,
-                    # 'anniversary_date': customer.anniversary_date.strftime("%d/%m/%Y 00:00") if customer.anniversary_date else None,
                     'gender': customer.gender
                 },
                 'crm_ac_url': crm_ac_url
             }
-            # print(customer.birth_date.strftime("%d/%m/%Y 00:00"))
             return Response(response_data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
