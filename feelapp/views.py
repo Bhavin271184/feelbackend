@@ -1394,3 +1394,95 @@ class ContactUsListCreateView(generics.ListCreateAPIView):
     serializer_class = ContactUsSerializer
     permission_classes = [AllowAny]
 
+
+import csv
+import pandas as pd
+from rest_framework.views import APIView
+from django.utils.encoding import smart_str
+from django.http import HttpResponse
+from django.db import transaction
+from rest_framework.parsers import MultiPartParser
+
+
+class ServicesExportCSVView(APIView):
+    permission_classes = [AllowAny]  # Allow access to all users
+    
+    def get(self, request, *args, **kwargs):
+        queryset = Services.objects.all()
+        serializer = ServicesSerializer(queryset, many=True)
+
+        # Access the fields of the base serializer (not the ListSerializer)
+        fields = [field for field in serializer.child.fields]  # Access child fields
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="services.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(fields)  # Write header row
+
+        for item in serializer.data:
+            writer.writerow([item.get(field) for field in fields])  # Write data rows
+
+        return response
+
+
+class ServicesImportCSVView(APIView):
+    parser_classes = [MultiPartParser]
+    authentication_classes = []  # Remove authentication if needed
+    permission_classes = []      # Remove permission requirements if needed
+
+    def post(self, request, *args, **kwargs):
+        file = request.FILES.get('file')
+        if not file:
+            return JsonResponse({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+                csv_file = file.read().decode('utf-8').splitlines()
+                reader = csv.DictReader(csv_file)
+
+                for row in reader:
+                    service_name = row.get('service_name')
+                    price = row.get('price')
+                    servid = row.get('servid')
+                    childcategory = row.get('childcategory')
+                    subcategory = row.get('subcategory')
+                    categories = row.get('categories')
+
+                    # Attempt to find existing service
+                    service = Services.objects.filter(
+                        service_name=service_name,
+                        price=price,
+                        servid=servid,
+                        childcategory_id=childcategory,
+                        subcategory_id=subcategory,
+                        categories_id=categories
+                    ).first()
+
+                    serializer_data = {
+                        'service_name': service_name,
+                        'price': price,
+                        'servid': servid,
+                        'childcategory': childcategory,
+                        'subcategory': subcategory,
+                        'categories': categories,
+                        'priority': row.get('priority', 0),
+                        'description': row.get('description', ''),
+                        'image': row.get('image', None)
+                    }
+
+                    if service:
+                        # Update existing service
+                        serializer = ServicesSerializer(service, data=serializer_data, partial=True)
+                    else:
+                        # Create a new service
+                        serializer = ServicesSerializer(data=serializer_data)
+
+                    if serializer.is_valid():
+                        serializer.save()
+                    else:
+                        return JsonResponse({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+            return JsonResponse({'status': 'Import successful'}, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

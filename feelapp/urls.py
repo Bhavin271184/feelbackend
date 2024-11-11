@@ -66,4 +66,8 @@ urlpatterns = [
 
     path('contact-us/', ContactUsListCreateView.as_view(), name='contact_us_list_create'),
 
+    path('services/export-csv/', ServicesExportCSVView.as_view(), name='services_export_csv'),
+    path('services/import-csv/', ServicesImportCSVView.as_view(), name='services_import_csv'),
+
+
 ]
