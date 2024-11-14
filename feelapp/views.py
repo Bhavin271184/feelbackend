@@ -1033,6 +1033,7 @@ class ServicesListCreateView(generics.ListCreateAPIView):
         end_date_str = self.request.GET.get('end_date')
         slug = self.request.GET.get('slug')  # Get the slug from the request
         search_query = self.request.GET.get('search')
+        search_type = self.request.GET.get('search_type')
 
         if slug:
             # Adjust this filter to correctly reflect your model relationships
@@ -1042,8 +1043,24 @@ class ServicesListCreateView(generics.ListCreateAPIView):
                 Q(categories__slug=slug)
             )
 
-        if search_query:
-            queryset = queryset.filter(Q(service_name__icontains=search_query))
+        if search_query and search_type:
+            if search_type == 'service_name':
+                queryset = queryset.filter(Q(service_name__icontains=search_query))
+            elif search_type == 'category':
+                queryset = queryset.filter(Q(categories__name__icontains=search_query))
+            elif search_type == 'subcategory':
+                queryset = queryset.filter(Q(subcategory__name__icontains=search_query))
+            elif search_type == 'childcategory':
+                queryset = queryset.filter(Q(childcategory__name__icontains=search_query))
+            elif search_type == 'servid':
+                # Ensure search_query is a valid integer for servid search
+                try:
+                    servid_query = int(search_query)
+                    queryset = queryset.filter(servid=servid_query)
+                except ValueError:
+                    # If search_query is not an integer, skip the servid filter
+                    pass
+
 
         start_date = None
         end_date = None
