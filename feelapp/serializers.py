@@ -177,6 +177,10 @@ class ServicesSerializer(serializers.ModelSerializer):
     categories = serializers.PrimaryKeyRelatedField(queryset=CategoryModel.objects.all(),required=False, allow_null=True)
     subcategory = serializers.PrimaryKeyRelatedField(queryset=SubcategoryModel.objects.all(),required=False, allow_null=True)
     childcategory = serializers.PrimaryKeyRelatedField(queryset=ChildCategoryModel.objects.all(),required=False, allow_null=True)
+
+    category_name = serializers.SerializerMethodField()
+    subcategory_name = serializers.SerializerMethodField()
+    childcategory_name = serializers.SerializerMethodField()
     
     # Include ChildCategoryModelSerializer to show full childcategory details in GET requests
     childcategory_data = serializers.SerializerMethodField()
@@ -187,7 +191,21 @@ class ServicesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Services
-        fields = ['id', 'categories', 'price', 'image', 'description', 'servid', 'subcategory', 'childcategory', 'service_name', 'priority', 'subcategory_data', 'childcategory_data', 'category_data', 'created_at']
+        fields = ['id', 'categories', 'price', 'image', 'description', 'servid', 'subcategory', 'childcategory', 
+                  'service_name', 'priority', 'subcategory_data', 'childcategory_data', 'category_data', 
+                  'created_at', 'category_name', 'subcategory_name', 'childcategory_name']
+
+    def get_category_name(self, obj):
+        # Return the category name if it exists
+        return obj.categories.name if obj.categories else None
+
+    def get_subcategory_name(self, obj):
+        # Return the subcategory name if it exists
+        return obj.subcategory.name if obj.subcategory else None
+
+    def get_childcategory_name(self, obj):
+        # Return the childcategory name if it exists
+        return obj.childcategory.name if obj.childcategory else None
 
     def get_childcategory_data(self, obj):
         # You need to define a serializer for ChildCategoryModel if you want to use it
