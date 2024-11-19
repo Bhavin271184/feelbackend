@@ -1452,18 +1452,47 @@ class ServicesImportCSVView(APIView):
         if not file:
             return JsonResponse({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
 
+        uploaded_data = []  # List to hold successfully processed data
+        failed_data = []    # List to hold data that failed
+
         try:
             with transaction.atomic():
-                csv_file = file.read().decode('utf-8').splitlines()
+                # Remove BOM if present
+                file_content = file.read()
+                if file_content[:3] == b'\xef\xbb\xbf':  # Check for BOM (UTF-8 with BOM)
+                    file_content = file_content[3:]  # Remove BOM
+                csv_file = file_content.decode('utf-8').splitlines()
+                reader = csv.DictReader(csv_file)
+
+                childcategory_is_nullable = False  # Flag to track if childcategory can be null
+
+                # First pass through the file to check for any null childcategory
+                for row in reader:
+                    childcategory = row.get('childcategory')
+                    if not childcategory:  # If the childcategory is empty or null
+                        childcategory_is_nullable = True
+                # Reset the reader since we've already read it once
+                file.seek(0)
                 reader = csv.DictReader(csv_file)
 
                 for row in reader:
                     service_name = row.get('service_name')
                     price = row.get('price')
                     servid = row.get('servid')
-                    childcategory = row.get('childcategory')
+
+                    # Ensure `id` or foreign keys are not empty or invalid
+                    childcategory = row.get('childcategory') if childcategory_is_nullable else row.get('childcategory') or None
                     subcategory = row.get('subcategory')
                     categories = row.get('categories')
+
+                    # Ensure that `id` fields are not empty strings or invalid
+                    try:
+                        childcategory = int(childcategory) if childcategory else None
+                        subcategory = int(subcategory) if subcategory else None
+                        categories = int(categories) if categories else None
+                    except ValueError:
+                        failed_data.append(row)  # Add the current row to failed data
+                        continue  # Skip this row and continue with the next one
 
                     # Attempt to find existing service
                     service = Services.objects.filter(
@@ -1495,11 +1524,23 @@ class ServicesImportCSVView(APIView):
                         serializer = ServicesSerializer(data=serializer_data)
 
                     if serializer.is_valid():
-                        serializer.save()
+                        saved_service = serializer.save()  # Save the service and get the saved object
+                        uploaded_data.append(serializer.data)  # Add the saved data to the response list
                     else:
-                        return JsonResponse({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                        failed_data.append(row)  # Add the current row to failed data if serializer fails
+                        continue  # Skip this row and continue with the next one
 
-            return JsonResponse({'status': 'Import successful'}, status=status.HTTP_201_CREATED)
+            # Return the uploaded data and any failed data in the response
+            return JsonResponse({
+                'status': 'Import successful',
+                'uploaded_data': uploaded_data,
+                'failed_data': failed_data
+            }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # If an error occurs, return the data that was uploaded up to that point along with the error
+            return JsonResponse({
+                'error': str(e),
+                'uploaded_data': uploaded_data,
+                'failed_data': failed_data
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
