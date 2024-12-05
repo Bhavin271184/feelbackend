@@ -113,10 +113,10 @@ class BlogListCreateView(generics.ListCreateAPIView):
         
         start_date_str = self.request.GET.get('start_date')
         end_date_str = self.request.GET.get('end_date')
-        # slug = self.request.GET.get('slug')
+        slug = self.request.GET.get('slug')
 
-        # if slug:
-        #     queryset = queryset.filter(slug=slug)
+        if slug:
+            queryset = queryset.filter(slug=slug)
 
         if start_date_str:
             try:
