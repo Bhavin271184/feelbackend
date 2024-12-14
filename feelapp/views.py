@@ -1496,8 +1496,8 @@ class ServicesImportCSVView(APIView):
 
                     # Attempt to find existing service
                     service = Services.objects.filter(
-                        service_name=service_name,
-                        price=price,
+                        # service_name=service_name,
+                        # price=price,
                         servid=servid,
                         childcategory_id=childcategory,
                         subcategory_id=subcategory,
