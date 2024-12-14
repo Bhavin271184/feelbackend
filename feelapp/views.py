@@ -1215,6 +1215,22 @@ class HeroOfferPriorityUpdateView(BaseNormalPriorityUpdateView):
     serializer_class = HeroOfferSerializer
     field_name = 'priority'  
 
+class CategoryPriorityUpdateView(BaseNormalPriorityUpdateView):
+    queryset = CategoryModel.objects.all()
+    serializer_class = CategoryModelSerializer
+    field_name = 'priority' 
+
+
+class SubcategoryPriorityUpdateView(BaseNormalPriorityUpdateView):
+    queryset = SubcategoryModel.objects.all()
+    serializer_class = SubcategoryModelSerializer
+    field_name = 'priority'  
+
+class ChildCategoryPriorityUpdateView(BaseNormalPriorityUpdateView):
+    queryset = ChildCategoryModel.objects.all()
+    serializer_class = ChildCategoryModelSerializer
+    field_name = 'priority' 
+
 
 def add_30_minutes(time_str):
     if len(time_str) != 4:

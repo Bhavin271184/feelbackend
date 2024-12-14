@@ -63,6 +63,10 @@ urlpatterns = [
 
     path('services/<int:pk>/update-priority/', ServicesPriorityUpdateView.as_view(), name='services-update-priority'),
     path('hero-offers/<int:pk>/update-priority/', HeroOfferPriorityUpdateView.as_view(), name='hero-offer-update-priority'),
+    path('category/<int:pk>/update-priority/', CategoryPriorityUpdateView.as_view(), name='category-update-priority'),
+    path('subcategory/<int:pk>/update-priority/', SubcategoryPriorityUpdateView.as_view(), name='subcategory-update-priority'),
+    path('childcategory/<int:pk>/update-priority/', ChildCategoryPriorityUpdateView.as_view(), name='childcategory-update-priority'),
+
 
     path('contact-us/', ContactUsListCreateView.as_view(), name='contact_us_list_create'),
 

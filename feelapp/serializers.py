@@ -191,9 +191,9 @@ class ServicesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Services
-        fields = ['id', 'categories', 'price', 'image', 'description', 'servid', 'subcategory', 'childcategory', 
-                  'service_name', 'priority', 'subcategory_data', 'childcategory_data', 'category_data', 
-                  'created_at', 'category_name', 'subcategory_name', 'childcategory_name']
+        fields = ['id', 'categories', 'price', 'category_name', 'subcategory_name', 'childcategory_name','service_name','servid', 'subcategory', 'childcategory', 
+                   'priority', 'subcategory_data', 'childcategory_data', 'category_data', 
+                  'created_at','image', 'description',  ]
 
     def get_category_name(self, obj):
         # Return the category name if it exists
