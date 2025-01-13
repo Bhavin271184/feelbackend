@@ -356,19 +356,36 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=365),
 }
 
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
-# S3 Storage configuration
-AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
-AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
-AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
+# # S3 Storage configuration
+# AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+# AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+# AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
+# AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
 
 
-AWS_S3_OBJECT_PARAMETERS = {
-    'ContentType': 'image/webp',
-}
+# AWS_S3_OBJECT_PARAMETERS = {
+#     'ContentType': 'image/webp',
+# }
 
 # Uncomment if you don't want to overwrite files
 # AWS_S3_FILE_OVERWRITE = False
+
+# Use Azure's storage backend for default file and static file storage
+DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+STATICFILES_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+
+# Azure Storage Account configuration
+AZURE_ACCOUNT_NAME = os.environ.get("AZURE_ACCOUNT_NAME")  # Replace with your Azure account name
+AZURE_ACCOUNT_KEY = os.environ.get("AZURE_ACCOUNT_KEY")    # Replace with your Azure account key
+AZURE_CONTAINER = os.environ.get("AZURE_CONTAINER")       # Replace with your blob container name
+
+# Optional: Specify custom parameters for uploaded files
+AZURE_OBJECT_PARAMETERS = {
+    'ContentType': 'image/webp',  # Set a default content type for uploaded images
+}
+
+# Optional: Prevent overwriting files with the same name
+AZURE_OVERWRITE_FILES = False  # Defaults to True; set to False to avoid overwriting files
