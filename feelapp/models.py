@@ -334,3 +334,8 @@ class ContactUs(models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField()
     message = models.TextField()
+
+class Titles(models.Model):
+    name = models.CharField(max_length=255)
+    data = models.JSONField()
+    created_at = models.DateTimeField(default=timezone.now)

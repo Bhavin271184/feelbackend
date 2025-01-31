@@ -416,3 +416,12 @@ class ContactUsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactUs
         fields = ['id', 'name', 'email', 'message']
+
+
+
+class TitlesSerializer(serializers.ModelSerializer):
+    data = serializers.JSONField()  # Accepts JSON input
+
+    class Meta:
+        model = Titles
+        fields = '__all__'

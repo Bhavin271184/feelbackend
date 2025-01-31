@@ -1560,3 +1560,16 @@ class ServicesImportCSVView(APIView):
                 'uploaded_data': uploaded_data,
                 'failed_data': failed_data
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class TitlesListCreateView(generics.ListCreateAPIView):
+    queryset = Titles.objects.all()
+    serializer_class = TitlesSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticatedForPostPatchDelete]
+
+class TitlesRetrieveUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Titles.objects.all()
+    serializer_class = TitlesSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticatedForPostPatchDelete]

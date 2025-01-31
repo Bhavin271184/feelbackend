@@ -73,5 +73,6 @@ urlpatterns = [
     path('services/export-csv/', ServicesExportCSVView.as_view(), name='services_export_csv'),
     path('services/import-csv/', ServicesImportCSVView.as_view(), name='services_import_csv'),
 
-
+    path('titles/', TitlesListCreateView.as_view(), name='titles-list-create'),  # List all & create a title
+    path('titles/<int:pk>/', TitlesRetrieveUpdateDeleteView.as_view(), name='titles-detail'),
 ]

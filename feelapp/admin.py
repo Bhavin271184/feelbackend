@@ -19,4 +19,5 @@ admin.site.register(ChildCategoryModel)
 admin.site.register(Services)
 admin.site.register(ProductService)
 admin.site.register(Customer)
+admin.site.register(Titles)
 
