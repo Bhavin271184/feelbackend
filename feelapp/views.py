@@ -1595,8 +1595,8 @@ class TitlesRetrieveUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
 class TitlesListCreateView(generics.ListCreateAPIView):
     queryset = Titles.objects.all()
     serializer_class = TitlesSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedForPostPatchDelete]
+
     
     def get(self, request, *args, **kwargs):
         # Get the first Titles instance (or handle empty state)
