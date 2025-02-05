@@ -424,4 +424,4 @@ class TitlesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Titles
-        fields = '__all__'
+        fields = ['data']

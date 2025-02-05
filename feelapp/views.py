@@ -20,6 +20,7 @@ import requests
 import json
 from datetime import datetime, time
 from urllib.parse import urlencode
+from rest_framework.permissions import IsAuthenticated
 
 
 class CategoryModelListCreateView(generics.ListCreateAPIView):
@@ -1562,14 +1563,58 @@ class ServicesImportCSVView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class TitlesListCreateView(generics.ListCreateAPIView):
-    queryset = Titles.objects.all()
-    serializer_class = TitlesSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticatedForPostPatchDelete]
-
 class TitlesRetrieveUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Titles.objects.all()
     serializer_class = TitlesSerializer
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticatedForPostPatchDelete]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        # Get the instance to fetch the data
+        instance = self.get_object()
+
+        # Return the data from the instance's JSON field
+        return Response(instance.data, status=200)
+
+    def patch(self, request, *args, **kwargs):
+        # Get the instance to update
+        instance = self.get_object()
+
+        # Perform partial update (with partial=True)
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        # Save the updated instance
+        instance.data = serializer.validated_data.get('data', instance.data)  # Ensure 'data' gets updated
+        instance.save()
+
+        # Return the full updated JSON from the database
+        return Response(instance.data, status=status.HTTP_200_OK)
+
+
+class TitlesListCreateView(generics.ListCreateAPIView):
+    queryset = Titles.objects.all()
+    serializer_class = TitlesSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        # Get the first Titles instance (or handle empty state)
+        instance = Titles.objects.first()
+
+        if not instance:
+            return Response({"message": "No titles found."}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(instance.data, status=200)
+
+    def post(self, request, *args, **kwargs):
+        # Handle POST request to create new Titles instance with data
+        data = request.data.get('data', {})
+
+        # Check if we need to create a new Titles instance
+        if not data:
+            return Response({"error": "Data is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        new_title = Titles.objects.create(data=data)
+
+        return Response(TitlesSerializer(new_title).data, status=status.HTTP_201_CREATED)
