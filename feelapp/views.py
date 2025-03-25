@@ -1469,57 +1469,74 @@ class ServicesImportCSVView(APIView):
         if not file:
             return JsonResponse({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
 
-        uploaded_data, failed_data = [], []
+        uploaded_data = []  # ✅ Fixed initialization
+        failed_data = []  # ✅ Fixed initialization
 
         try:
             with transaction.atomic():
                 file_content = file.read()
-                if file_content[:3] == b'\xef\xbb\xbf':
+                
+                # Remove Byte Order Mark (BOM) if present
+                if file_content[:3] == b'\xef\xbb\xbf':  
                     file_content = file_content[3:]
-                csv_file = file_content.decode('utf-8').splitlines()
+
+                # Decode and split CSV lines
+                try:
+                    csv_file = file_content.decode('utf-8').splitlines()
+                except UnicodeDecodeError:
+                    return JsonResponse({'error': 'Invalid file encoding. Use UTF-8.'}, status=status.HTTP_400_BAD_REQUEST)
+
                 reader = csv.DictReader(csv_file)
 
-                for row in reader:
-                    service_name = row.get('service_name')
-                    price = row.get('price')
-                    servid = row.get('servid')
-                    priority = row.get('priority', 0)
-                    description = row.get('description', '')
+                print("CSV Headers:", reader.fieldnames)  # Debugging: Check headers
 
-                    categories = row.get('categories')
-                    subcategory = row.get('subcategory')
-                    childcategory = row.get('childcategory')
+                for row in reader:
+                    if not any(row.values()):  # Skip empty rows
+                        continue
+
+                    service_name = row.get('service_name', '').strip()
+                    price = row.get('price', '0').strip()
+                    servid = row.get('servid', '0').strip()
+                    priority = row.get('priority', '0').strip()
+                    description = row.get('description', '').strip()
+                    categories_name = row.get('categories', '').strip()
+                    subcategory_name = row.get('subcategory', '').strip()
+                    childcategory_name = row.get('childcategory', '').strip()
 
                     try:
                         price = float(price) if price else 0.0
                         servid = int(servid) if servid else 0
-                        categories = int(categories) if categories else None
-                        subcategory = int(subcategory) if subcategory else None
-                        childcategory = int(childcategory) if childcategory else None
-                        priority = int(priority)
+                        priority = int(priority) if priority else 0
+
+                        # Fetch category, subcategory, and childcategory IDs
+                        categories = CategoryModel.objects.filter(name=categories_name).first()
+                        subcategory = SubcategoryModel.objects.filter(name=subcategory_name).first()
+                        childcategory = ChildCategoryModel.objects.filter(name=childcategory_name).first()
+
+                        categories_id = categories.id if categories else None
+                        subcategory_id = subcategory.id if subcategory else None
+                        childcategory_id = childcategory.id if childcategory else None
                     except ValueError:
                         failed_data.append(row)
                         continue
 
-                    # Check if service exists based on service_name
+                    # Check if service exists
                     service = Services.objects.filter(service_name=service_name).first()
 
                     serializer_data = {
                         'service_name': service_name,
                         'price': price,
                         'servid': servid,
-                        'categories': categories,
-                        'subcategory': subcategory,
-                        'childcategory': childcategory,
+                        'categories': categories_id,
+                        'subcategory': subcategory_id,
+                        'childcategory': childcategory_id,
                         'priority': priority,
                         'description': description,
                     }
 
                     if service:
-                        # Update existing service
                         serializer = ServicesSerializer(service, data=serializer_data, partial=True)
                     else:
-                        # Create a new service
                         serializer = ServicesSerializer(data=serializer_data)
 
                     if serializer.is_valid():
@@ -1532,7 +1549,6 @@ class ServicesImportCSVView(APIView):
 
         except Exception as e:
             return JsonResponse({'error': str(e), 'uploaded_data': uploaded_data, 'failed_data': failed_data}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 class TitlesRetrieveUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Titles.objects.all()
